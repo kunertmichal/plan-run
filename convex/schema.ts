@@ -21,8 +21,6 @@ const schema = defineSchema({
         duration: v.number(),
       })
     ),
-    totalDistance: v.number(),
-    totalDuration: v.number(),
   }).index("by_user", ["userId"]),
 
   scheduledWorkouts: defineTable({
@@ -43,7 +41,6 @@ const schema = defineSchema({
         duration: v.number(),
       })
     ),
-    completed: v.optional(v.boolean()),
   }).index("by_user_date", ["userId", "date"]),
 });
 
