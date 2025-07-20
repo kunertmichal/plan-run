@@ -49,7 +49,7 @@ function Calendar() {
       time: "10AM",
       datetime: "2025-01-03T10:00",
       href: "#",
-      date: new Date(2025, 0, 3), // 3 stycznia 2025
+      date: new Date(2025, 6, 3), // 3 stycznia 2025
     },
     {
       id: 2,
@@ -57,7 +57,7 @@ function Calendar() {
       time: "2PM",
       datetime: "2025-01-03T14:00",
       href: "#",
-      date: new Date(2025, 0, 3), // 3 stycznia 2025
+      date: new Date(2025, 6, 3), // 3 stycznia 2025
     },
     {
       id: 3,
@@ -65,7 +65,7 @@ function Calendar() {
       time: "6PM",
       datetime: "2025-01-08T18:00",
       href: "#",
-      date: new Date(2025, 0, 8), // 8 stycznia 2025
+      date: new Date(2025, 6, 8), // 8 stycznia 2025
     },
     {
       id: 4,
@@ -73,7 +73,7 @@ function Calendar() {
       time: "3PM",
       datetime: "2025-01-22T15:00",
       href: "#",
-      date: new Date(2025, 0, 22), // 22 stycznia 2025
+      date: new Date(2025, 6, 22), // 22 stycznia 2025
     },
     {
       id: 5,
@@ -81,7 +81,7 @@ function Calendar() {
       time: "7PM",
       datetime: "2025-01-22T19:00",
       href: "#",
-      date: new Date(2025, 0, 22), // 22 stycznia 2025
+      date: new Date(2025, 6, 22), // 22 stycznia 2025
     },
     {
       id: 6,
@@ -89,7 +89,7 @@ function Calendar() {
       time: "2PM",
       datetime: "2025-01-25T14:00",
       href: "#",
-      date: new Date(2025, 0, 25), // 25 stycznia 2025
+      date: new Date(2025, 6, 25), // 25 stycznia 2025
     },
   ];
 
@@ -201,12 +201,6 @@ function Calendar() {
                             <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-indigo-600">
                               {event.name}
                             </p>
-                            <time
-                              dateTime={event.datetime}
-                              className="ml-3 hidden flex-none text-gray-500 group-hover:text-indigo-600 xl:block"
-                            >
-                              {event.time}
-                            </time>
                           </a>
                         </li>
                       ))}
