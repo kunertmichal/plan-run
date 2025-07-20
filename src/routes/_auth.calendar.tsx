@@ -1,139 +1,159 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ChevronLeftIcon, ChevronRightIcon, ClockIcon } from "lucide-react";
+import { useState } from "react";
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  isToday,
+  addMonths,
+  subMonths,
+  format,
+} from "date-fns";
+
+// Mapowanie nazw miesięcy w formie mianownika
+const monthNames = [
+  "Styczeń",
+  "Luty",
+  "Marzec",
+  "Kwiecień",
+  "Maj",
+  "Czerwiec",
+  "Lipiec",
+  "Sierpień",
+  "Wrzesień",
+  "Październik",
+  "Listopad",
+  "Grudzień",
+];
+
 import { cn } from "@/lib/utils";
-import { ClockIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_auth/calendar")({
   component: Calendar,
 });
 
 function Calendar() {
-  const days = [
-    { date: "2021-12-27", events: [] },
-    { date: "2021-12-28", events: [] },
-    { date: "2021-12-29", events: [] },
-    { date: "2021-12-30", events: [] },
-    { date: "2021-12-31", events: [] },
-    { date: "2022-01-01", isCurrentMonth: true, events: [] },
-    { date: "2022-01-02", isCurrentMonth: true, events: [] },
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const events = [
     {
-      date: "2022-01-03",
-      isCurrentMonth: true,
-      events: [
-        {
-          id: 1,
-          name: "Design review",
-          time: "10AM",
-          datetime: "2022-01-03T10:00",
-          href: "#",
-        },
-        {
-          id: 2,
-          name: "Sales meeting",
-          time: "2PM",
-          datetime: "2022-01-03T14:00",
-          href: "#",
-        },
-      ],
+      id: 1,
+      name: "Design review",
+      time: "10AM",
+      datetime: "2025-01-03T10:00",
+      href: "#",
+      date: new Date(2025, 0, 3), // 3 stycznia 2025
     },
-    { date: "2022-01-04", isCurrentMonth: true, events: [] },
-    { date: "2022-01-05", isCurrentMonth: true, events: [] },
-    { date: "2022-01-06", isCurrentMonth: true, events: [] },
     {
-      date: "2022-01-07",
-      isCurrentMonth: true,
-      events: [
-        {
-          id: 3,
-          name: "Date night",
-          time: "6PM",
-          datetime: "2022-01-08T18:00",
-          href: "#",
-        },
-      ],
+      id: 2,
+      name: "Sales meeting",
+      time: "2PM",
+      datetime: "2025-01-03T14:00",
+      href: "#",
+      date: new Date(2025, 0, 3), // 3 stycznia 2025
     },
-    { date: "2022-01-08", isCurrentMonth: true, events: [] },
-    { date: "2022-01-09", isCurrentMonth: true, events: [] },
-    { date: "2022-01-10", isCurrentMonth: true, events: [] },
-    { date: "2022-01-11", isCurrentMonth: true, events: [] },
     {
-      date: "2022-01-12",
-      isCurrentMonth: true,
-      isToday: true,
-      events: [
-        {
-          id: 6,
-          name: "Sam's birthday party",
-          time: "2PM",
-          datetime: "2022-01-25T14:00",
-          href: "#",
-        },
-      ],
+      id: 3,
+      name: "Date night",
+      time: "6PM",
+      datetime: "2025-01-08T18:00",
+      href: "#",
+      date: new Date(2025, 0, 8), // 8 stycznia 2025
     },
-    { date: "2022-01-13", isCurrentMonth: true, events: [] },
-    { date: "2022-01-14", isCurrentMonth: true, events: [] },
-    { date: "2022-01-15", isCurrentMonth: true, events: [] },
-    { date: "2022-01-16", isCurrentMonth: true, events: [] },
-    { date: "2022-01-17", isCurrentMonth: true, events: [] },
-    { date: "2022-01-18", isCurrentMonth: true, events: [] },
-    { date: "2022-01-19", isCurrentMonth: true, events: [] },
-    { date: "2022-01-20", isCurrentMonth: true, events: [] },
-    { date: "2022-01-21", isCurrentMonth: true, events: [] },
     {
-      date: "2022-01-22",
-      isCurrentMonth: true,
-      isSelected: true,
-      events: [
-        {
-          id: 4,
-          name: "Maple syrup museum",
-          time: "3PM",
-          datetime: "2022-01-22T15:00",
-          href: "#",
-        },
-        {
-          id: 5,
-          name: "Hockey game",
-          time: "7PM",
-          datetime: "2022-01-22T19:00",
-          href: "#",
-        },
-      ],
+      id: 4,
+      name: "Maple syrup museum",
+      time: "3PM",
+      datetime: "2025-01-22T15:00",
+      href: "#",
+      date: new Date(2025, 0, 22), // 22 stycznia 2025
     },
-    { date: "2022-01-23", isCurrentMonth: true, events: [] },
-    { date: "2022-01-24", isCurrentMonth: true, events: [] },
-    { date: "2022-01-25", isCurrentMonth: true, events: [] },
-    { date: "2022-01-26", isCurrentMonth: true, events: [] },
-    { date: "2022-01-27", isCurrentMonth: true, events: [] },
-    { date: "2022-01-28", isCurrentMonth: true, events: [] },
-    { date: "2022-01-29", isCurrentMonth: true, events: [] },
-    { date: "2022-01-30", isCurrentMonth: true, events: [] },
-    { date: "2022-01-31", isCurrentMonth: true, events: [] },
-    { date: "2022-02-01", events: [] },
-    { date: "2022-02-02", events: [] },
-    { date: "2022-02-03", events: [] },
     {
-      date: "2022-02-04",
-      events: [
-        {
-          id: 7,
-          name: "Cinema with friends",
-          time: "9PM",
-          datetime: "2022-02-04T21:00",
-          href: "#",
-        },
-      ],
+      id: 5,
+      name: "Hockey game",
+      time: "7PM",
+      datetime: "2025-01-22T19:00",
+      href: "#",
+      date: new Date(2025, 0, 22), // 22 stycznia 2025
     },
-    { date: "2022-02-05", events: [] },
-    { date: "2022-02-06", events: [] },
+    {
+      id: 6,
+      name: "Sam's birthday party",
+      time: "2PM",
+      datetime: "2025-01-25T14:00",
+      href: "#",
+      date: new Date(2025, 0, 25), // 25 stycznia 2025
+    },
   ];
-  const selectedDay = days.find((day) => day.isSelected);
+
+  const goToPreviousMonth = () => {
+    setCurrentDate(subMonths(currentDate, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(addMonths(currentDate, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(new Date());
+  };
+
+  // Generowanie dni kalendarza
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const calendarStart = startOfWeek(monthStart);
+  const calendarEnd = endOfWeek(monthEnd);
+
+  const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  // Obliczanie rzeczywistej liczby tygodni potrzebnych dla kalendarza
+  const numberOfWeeks = Math.ceil(days.length / 7);
+
+  // Funkcja do pobierania wydarzeń dla danego dnia
+  const getEventsForDay = (date: Date) => {
+    return events.filter((event) => {
+      console.log(isSameDay(event.date, date));
+      return isSameDay(event.date, date);
+    });
+  };
+
+  // Funkcja do sprawdzania czy dzień jest dzisiejszy
+  const isCurrentDay = (date: Date) => isToday(date);
+
+  // Funkcja do sprawdzania czy dzień jest wybrany
+  const isSelectedDay = (date: Date) =>
+    selectedDate && isSameDay(date, selectedDate);
+
+  // Funkcja do sprawdzania czy dzień należy do aktualnego miesiąca
+  const isCurrentMonth = (date: Date) => isSameMonth(date, currentDate);
+
+  const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate) : [];
 
   return (
     <div>
-      <header className="mb-6">
+      <header className="mb-6 flex items-center justify-between">
         <h1 className="text-base font-semibold text-gray-900">
-          <time dateTime="2022-01">Styczeń 2025</time>
+          <time dateTime={currentDate.toISOString().slice(0, 7)}>
+            {monthNames[currentDate.getMonth()]} {format(currentDate, "yyyy")}
+          </time>
         </h1>
+        <div className="flex items-center gap-2">
+          <Button onClick={goToPreviousMonth} size="icon">
+            <ChevronLeftIcon className="h-5 w-5" />
+          </Button>
+          <Button onClick={goToToday}>Dzisiaj</Button>
+          <Button onClick={goToNextMonth} size="icon">
+            <ChevronRightIcon className="h-5 w-5" />
+          </Button>
+        </div>
       </header>
       <div className="shadow-sm ring-1 ring-black/5 lg:flex lg:flex-auto lg:flex-col">
         <div className="grid grid-cols-7 gap-px border-b border-gray-300 bg-gray-200 text-center text-xs/6 font-semibold text-gray-700 lg:flex-none">
@@ -146,100 +166,121 @@ function Calendar() {
           <div className="bg-white py-2">Ndz</div>
         </div>
         <div className="flex bg-gray-200 text-xs/6 text-gray-700 lg:flex-auto">
-          <div className="hidden w-full lg:grid lg:grid-cols-7 lg:grid-rows-6 lg:gap-px">
-            {days.map((day) => (
-              <div
-                key={day.date}
-                className={cn(
-                  day.isCurrentMonth ? "bg-white" : "bg-gray-50 text-gray-500",
-                  "relative px-3 py-2"
-                )}
-              >
-                <time
-                  dateTime={day.date}
-                  className={
-                    day.isToday
-                      ? "flex size-6 items-center justify-center rounded-full bg-indigo-600 font-semibold text-white"
-                      : undefined
-                  }
-                >
-                  {day.date.split("-").pop()?.replace(/^0/, "")}
-                </time>
-                {day.events.length > 0 && (
-                  <ol className="mt-2">
-                    {day.events.map((event) => (
-                      <li key={event.id}>
-                        <a href={event.href} className="group flex">
-                          <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-indigo-600">
-                            {event.name}
-                          </p>
-                          <time
-                            dateTime={event.datetime}
-                            className="ml-3 hidden flex-none text-gray-500 group-hover:text-indigo-600 xl:block"
-                          >
-                            {event.time}
-                          </time>
-                        </a>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="isolate grid w-full grid-cols-7 grid-rows-6 gap-px lg:hidden">
-            {days.map((day) => (
-              <button
-                key={day.date}
-                type="button"
-                className={cn(
-                  day.isCurrentMonth ? "bg-white" : "bg-gray-50",
-                  (day.isSelected || day.isToday) && "font-semibold",
-                  day.isSelected && "text-white",
-                  !day.isSelected && day.isToday && "text-indigo-600",
-                  !day.isSelected &&
-                    day.isCurrentMonth &&
-                    !day.isToday &&
-                    "text-gray-900",
-                  !day.isSelected &&
-                    !day.isCurrentMonth &&
-                    !day.isToday &&
-                    "text-gray-500",
-                  "flex h-14 flex-col px-3 py-2 hover:bg-gray-100 focus:z-10"
-                )}
-              >
-                <time
-                  dateTime={day.date}
+          <div
+            className="hidden w-full lg:grid lg:grid-cols-7 lg:gap-px"
+            style={{ gridTemplateRows: `repeat(${numberOfWeeks}, 1fr)` }}
+          >
+            {days.map((day) => {
+              const dayEvents = getEventsForDay(day);
+              console.log(dayEvents);
+              return (
+                <div
+                  key={day.toISOString()}
                   className={cn(
-                    day.isSelected &&
-                      "flex size-6 items-center justify-center rounded-full",
-                    day.isSelected && day.isToday && "bg-indigo-600",
-                    day.isSelected && !day.isToday && "bg-gray-900",
-                    "ml-auto"
+                    isCurrentMonth(day)
+                      ? "bg-white"
+                      : "bg-gray-50 text-gray-500",
+                    "relative px-3 py-2 min-h-24"
                   )}
                 >
-                  {day.date.split("-").pop()?.replace(/^0/, "")}
-                </time>
-                <span className="sr-only">{day.events.length} events</span>
-                {day.events.length > 0 && (
-                  <span className="-mx-0.5 mt-auto flex flex-wrap-reverse">
-                    {day.events.map((event) => (
-                      <span
-                        key={event.id}
-                        className="mx-0.5 mb-1 size-1.5 rounded-full bg-gray-400"
-                      />
-                    ))}
-                  </span>
-                )}
-              </button>
-            ))}
+                  <time
+                    dateTime={format(day, "yyyy-MM-dd")}
+                    className={
+                      isCurrentDay(day)
+                        ? "flex size-6 items-center justify-center rounded-full bg-indigo-600 font-semibold text-white"
+                        : undefined
+                    }
+                  >
+                    {format(day, "d")}
+                  </time>
+                  {dayEvents.length > 0 && (
+                    <ol className="mt-2">
+                      {dayEvents.map((event) => (
+                        <li key={event.id}>
+                          <a href={event.href} className="group flex">
+                            <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-indigo-600">
+                              {event.name}
+                            </p>
+                            <time
+                              dateTime={event.datetime}
+                              className="ml-3 hidden flex-none text-gray-500 group-hover:text-indigo-600 xl:block"
+                            >
+                              {event.time}
+                            </time>
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div
+            className="isolate grid w-full grid-cols-7 gap-px lg:hidden"
+            style={{ gridTemplateRows: `repeat(${numberOfWeeks}, 1fr)` }}
+          >
+            {days.map((day) => {
+              const dayEvents = getEventsForDay(day);
+              return (
+                <button
+                  key={day.toISOString()}
+                  type="button"
+                  onClick={() => setSelectedDate(day)}
+                  className={cn(
+                    isCurrentMonth(day) ? "bg-white" : "bg-gray-50",
+                    (isSelectedDay(day) || isCurrentDay(day)) &&
+                      "font-semibold",
+                    isSelectedDay(day) && "text-white",
+                    !isSelectedDay(day) &&
+                      isCurrentDay(day) &&
+                      "text-indigo-600",
+                    !isSelectedDay(day) &&
+                      isCurrentMonth(day) &&
+                      !isCurrentDay(day) &&
+                      "text-gray-900",
+                    !isSelectedDay(day) &&
+                      !isCurrentMonth(day) &&
+                      !isCurrentDay(day) &&
+                      "text-gray-500",
+                    "flex h-14 flex-col px-3 py-2 hover:bg-gray-100 focus:z-10"
+                  )}
+                >
+                  <time
+                    dateTime={format(day, "yyyy-MM-dd")}
+                    className={cn(
+                      isSelectedDay(day) &&
+                        "flex size-6 items-center justify-center rounded-full",
+                      isSelectedDay(day) &&
+                        isCurrentDay(day) &&
+                        "bg-indigo-600",
+                      isSelectedDay(day) && !isCurrentDay(day) && "bg-gray-900",
+                      "ml-auto"
+                    )}
+                  >
+                    {format(day, "d")}
+                  </time>
+                  <span className="sr-only">{dayEvents.length} events</span>
+                  {dayEvents.length > 0 && (
+                    <span className="-mx-0.5 mt-auto flex flex-wrap-reverse">
+                      {dayEvents.map((event) => (
+                        <span
+                          key={event.id}
+                          className="mx-0.5 mb-1 size-1.5 rounded-full bg-gray-400"
+                        />
+                      ))}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
-      {selectedDay?.events?.length && selectedDay?.events?.length > 0 && (
+      {selectedDayEvents?.length > 0 && (
         <div className="py-10 lg:hidden">
           <ol className="divide-y divide-gray-100 overflow-hidden bg-white text-sm shadow-sm ring-1 ring-black/5">
-            {selectedDay?.events.map((event) => (
+            {selectedDayEvents.map((event) => (
               <li
                 key={event.id}
                 className="group flex p-4 pr-6 focus-within:bg-gray-50 hover:bg-gray-50"
@@ -257,12 +298,6 @@ function Calendar() {
                     {event.time}
                   </time>
                 </div>
-                <a
-                  href={event.href}
-                  className="ml-6 flex-none self-center rounded-md bg-white px-3 py-2 font-semibold text-gray-900 opacity-0 shadow-xs ring-1 ring-gray-300 ring-inset group-hover:opacity-100 hover:ring-gray-400 focus:opacity-100"
-                >
-                  Edit<span className="sr-only">, {event.name}</span>
-                </a>
               </li>
             ))}
           </ol>
