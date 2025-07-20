@@ -14,7 +14,7 @@ import {
   subMonths,
   format,
 } from "date-fns";
-
+import { api } from "../../convex/_generated/api";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +22,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-// Mapowanie nazw miesięcy w formie mianownika
+const MONDAY_INDEX = 1;
+const TOTAL_ROWS_TO_DISPLAY = 7;
+
 const monthNames = [
   "Styczeń",
   "Luty",
@@ -40,6 +42,8 @@ const monthNames = [
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "convex/react";
+import { CreateWorkoutForm } from "@/components/workouts/create-workout-form";
 
 export const Route = createFileRoute("/_auth/calendar")({
   component: Calendar,
@@ -49,68 +53,21 @@ function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-  const events = [
-    {
-      id: 1,
-      name: "Design review",
-      time: "10AM",
-      datetime: "2025-01-03T10:00",
-      href: "#",
-      date: new Date(2025, 6, 3), // 3 stycznia 2025
-    },
-    {
-      id: 2,
-      name: "Sales meeting",
-      time: "2PM",
-      datetime: "2025-01-03T14:00",
-      href: "#",
-      date: new Date(2025, 6, 3), // 3 stycznia 2025
-    },
-    {
-      id: 3,
-      name: "Date night",
-      time: "6PM",
-      datetime: "2025-01-08T18:00",
-      href: "#",
-      date: new Date(2025, 6, 8), // 8 stycznia 2025
-    },
-    {
-      id: 4,
-      name: "Maple syrup museum",
-      time: "3PM",
-      datetime: "2025-01-22T15:00",
-      href: "#",
-      date: new Date(2025, 6, 22), // 22 stycznia 2025
-    },
-    {
-      id: 5,
-      name: "Hockey game",
-      time: "7PM",
-      datetime: "2025-01-22T19:00",
-      href: "#",
-      date: new Date(2025, 6, 22), // 22 stycznia 2025
-    },
-    {
-      id: 6,
-      name: "Sam's birthday party",
-      time: "2PM",
-      datetime: "2025-01-25T14:00",
-      href: "#",
-      date: new Date(2025, 6, 25), // 25 stycznia 2025
-    },
-  ];
+  const events = useQuery(api.scheduledWorkouts.getScheduledWorkouts, {
+    dateFrom: format(currentDate, "yyyy-MM-dd"),
+    dateTo: format(currentDate, "yyyy-MM-dd"),
+  });
 
   const handleOpenSheet = () => {
     setIsSheetOpen(true);
   };
 
   const goToPreviousMonth = () => {
-    setCurrentDate(subMonths(currentDate, 1));
+    setCurrentDate(subMonths(currentDate, MONDAY_INDEX));
   };
 
   const goToNextMonth = () => {
-    setCurrentDate(addMonths(currentDate, 1));
+    setCurrentDate(addMonths(currentDate, MONDAY_INDEX));
   };
 
   const goToToday = () => {
@@ -118,7 +75,6 @@ function Calendar() {
     setSelectedDate(new Date());
   };
 
-  // Generowanie dni kalendarza
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -126,24 +82,21 @@ function Calendar() {
 
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  // Obliczanie rzeczywistej liczby tygodni potrzebnych dla kalendarza
-  const numberOfWeeks = Math.ceil(days.length / 7);
+  const numberOfWeeks = Math.ceil(days.length / TOTAL_ROWS_TO_DISPLAY);
 
-  // Funkcja do pobierania wydarzeń dla danego dnia
   const getEventsForDay = (date: Date) => {
-    return events.filter((event) => {
-      return isSameDay(event.date, date);
-    });
+    return (
+      events?.filter((event) => {
+        return isSameDay(new Date(event.date), date);
+      }) ?? []
+    );
   };
 
-  // Funkcja do sprawdzania czy dzień jest dzisiejszy
   const isCurrentDay = (date: Date) => isToday(date);
 
-  // Funkcja do sprawdzania czy dzień jest wybrany
   const isSelectedDay = (date: Date) =>
     selectedDate && isSameDay(date, selectedDate);
 
-  // Funkcja do sprawdzania czy dzień należy do aktualnego miesiąca
   const isCurrentMonth = (date: Date) => isSameMonth(date, currentDate);
 
   const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate) : [];
@@ -212,12 +165,12 @@ function Calendar() {
                   {dayEvents.length > 0 && (
                     <ol className="mt-2">
                       {dayEvents.map((event) => (
-                        <li key={event.id}>
-                          <a href={event.href} className="group flex">
+                        <li key={event._id}>
+                          <div className="group flex">
                             <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-blue-600">
                               {event.name}
                             </p>
-                          </a>
+                          </div>
                         </li>
                       ))}
                     </ol>
@@ -271,7 +224,7 @@ function Calendar() {
                     <span className="-mx-0.5 mt-auto flex flex-wrap-reverse">
                       {dayEvents.map((event) => (
                         <span
-                          key={event.id}
+                          key={event._id}
                           className="mx-0.5 mb-1 size-1.5 rounded-full bg-gray-400"
                         />
                       ))}
@@ -288,20 +241,22 @@ function Calendar() {
           <ol className="divide-y divide-gray-100 overflow-hidden bg-white text-sm shadow-sm ring-1 ring-black/5">
             {selectedDayEvents.map((event) => (
               <li
-                key={event.id}
+                key={event._id}
                 className="group flex p-4 pr-6 focus-within:bg-gray-50 hover:bg-gray-50"
               >
                 <div className="flex-auto">
                   <p className="font-semibold text-gray-900">{event.name}</p>
                   <time
-                    dateTime={event.datetime}
+                    dateTime={event.date}
                     className="mt-2 flex items-center text-gray-700"
                   >
                     <ClockIcon
                       className="mr-2 size-5 text-gray-400"
                       aria-hidden="true"
                     />
-                    {event.time}
+                    {event.segments.map((segment) => (
+                      <span key={segment.type}>{segment.type}</span>
+                    ))}
                   </time>
                 </div>
               </li>
@@ -316,20 +271,7 @@ function Calendar() {
             <SheetTitle>Dodaj trening</SheetTitle>
           </SheetHeader>
           <div className="px-4 pb-4 flex-1 flex flex-col">
-            <ul>
-              <li>nazwa</li>
-              <li>Data</li>
-              <li>Typ</li>
-              <li>Tempo</li>
-              <li>Dystans</li>
-              <li>Czas</li>
-            </ul>
-            <div className="flex flex-col gap-2 mt-auto">
-              <Button className="w-full">Zapisz</Button>
-              <Button variant="outline" className="w-full">
-                Anuluj
-              </Button>
-            </div>
+            <CreateWorkoutForm />
           </div>
         </SheetContent>
       </Sheet>

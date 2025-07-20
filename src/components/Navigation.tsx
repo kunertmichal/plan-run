@@ -16,7 +16,7 @@ export function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/calendar" className="text-xl font-semibold">
-              Plan Run
+              🏃 PlanRun
             </Link>
           </div>
 

@@ -1,13 +1,18 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const getScheduledWorkouts = query({
   args: {
-    userId: v.id("users"),
     dateFrom: v.string(),
     dateTo: v.string(),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
     if (args.dateFrom > args.dateTo) {
       throw new Error("dateFrom must be less than or equal to dateTo");
     }
@@ -21,7 +26,7 @@ export const getScheduledWorkouts = query({
       .query("scheduledWorkouts")
       .withIndex("by_user_date", (q) =>
         q
-          .eq("userId", args.userId)
+          .eq("userId", userId)
           .gte("date", args.dateFrom)
           .lte("date", args.dateTo)
       )
