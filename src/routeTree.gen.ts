@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
-import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
+import { Route as AuthCalendarRouteImport } from './routes/_auth.calendar'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -28,35 +28,35 @@ const AuthProfileRoute = AuthProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthDashboardRoute = AuthDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthCalendarRoute = AuthCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AuthRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof AuthDashboardRoute
+  '/calendar': typeof AuthCalendarRoute
   '/profile': typeof AuthProfileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof AuthDashboardRoute
+  '/calendar': typeof AuthCalendarRoute
   '/profile': typeof AuthProfileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
-  '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/calendar': typeof AuthCalendarRoute
   '/_auth/profile': typeof AuthProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/profile'
+  fullPaths: '/' | '/calendar' | '/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/profile'
-  id: '__root__' | '/' | '/_auth' | '/_auth/dashboard' | '/_auth/profile'
+  to: '/' | '/calendar' | '/profile'
+  id: '__root__' | '/' | '/_auth' | '/_auth/calendar' | '/_auth/profile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -87,23 +87,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthProfileRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/dashboard': {
-      id: '/_auth/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthDashboardRouteImport
+    '/_auth/calendar': {
+      id: '/_auth/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthCalendarRouteImport
       parentRoute: typeof AuthRoute
     }
   }
 }
 
 interface AuthRouteChildren {
-  AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthCalendarRoute: typeof AuthCalendarRoute
   AuthProfileRoute: typeof AuthProfileRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
-  AuthDashboardRoute: AuthDashboardRoute,
+  AuthCalendarRoute: AuthCalendarRoute,
   AuthProfileRoute: AuthProfileRoute,
 }
 
