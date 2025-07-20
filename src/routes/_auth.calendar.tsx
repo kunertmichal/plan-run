@@ -15,6 +15,13 @@ import {
   format,
 } from "date-fns";
 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+
 // Mapowanie nazw miesięcy w formie mianownika
 const monthNames = [
   "Styczeń",
@@ -41,6 +48,7 @@ export const Route = createFileRoute("/_auth/calendar")({
 function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const events = [
     {
@@ -93,6 +101,10 @@ function Calendar() {
     },
   ];
 
+  const handleOpenSheet = () => {
+    setIsSheetOpen(true);
+  };
+
   const goToPreviousMonth = () => {
     setCurrentDate(subMonths(currentDate, 1));
   };
@@ -109,8 +121,8 @@ function Calendar() {
   // Generowanie dni kalendarza
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const calendarStart = startOfWeek(monthStart);
-  const calendarEnd = endOfWeek(monthEnd);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
@@ -120,7 +132,6 @@ function Calendar() {
   // Funkcja do pobierania wydarzeń dla danego dnia
   const getEventsForDay = (date: Date) => {
     return events.filter((event) => {
-      console.log(isSameDay(event.date, date));
       return isSameDay(event.date, date);
     });
   };
@@ -149,7 +160,12 @@ function Calendar() {
           <Button onClick={goToPreviousMonth} size="icon">
             <ChevronLeftIcon className="h-5 w-5" />
           </Button>
-          <Button onClick={goToToday}>Dzisiaj</Button>
+          <Button
+            disabled={isSameDay(currentDate, new Date())}
+            onClick={goToToday}
+          >
+            Dzisiaj
+          </Button>
           <Button onClick={goToNextMonth} size="icon">
             <ChevronRightIcon className="h-5 w-5" />
           </Button>
@@ -172,7 +188,6 @@ function Calendar() {
           >
             {days.map((day) => {
               const dayEvents = getEventsForDay(day);
-              console.log(dayEvents);
               return (
                 <div
                   key={day.toISOString()}
@@ -180,14 +195,15 @@ function Calendar() {
                     isCurrentMonth(day)
                       ? "bg-white"
                       : "bg-gray-50 text-gray-500",
-                    "relative px-3 py-2 min-h-24"
+                    "relative px-3 py-2 min-h-24 cursor-pointer hover:bg-green-100"
                   )}
+                  onClick={handleOpenSheet}
                 >
                   <time
                     dateTime={format(day, "yyyy-MM-dd")}
                     className={
                       isCurrentDay(day)
-                        ? "flex size-6 items-center justify-center rounded-full bg-indigo-600 font-semibold text-white"
+                        ? "flex size-6 items-center justify-center rounded-full bg-blue-600 font-semibold text-white"
                         : undefined
                     }
                   >
@@ -198,7 +214,7 @@ function Calendar() {
                       {dayEvents.map((event) => (
                         <li key={event.id}>
                           <a href={event.href} className="group flex">
-                            <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-indigo-600">
+                            <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-blue-600">
                               {event.name}
                             </p>
                           </a>
@@ -226,9 +242,7 @@ function Calendar() {
                     (isSelectedDay(day) || isCurrentDay(day)) &&
                       "font-semibold",
                     isSelectedDay(day) && "text-white",
-                    !isSelectedDay(day) &&
-                      isCurrentDay(day) &&
-                      "text-indigo-600",
+                    !isSelectedDay(day) && isCurrentDay(day) && "text-blue-600",
                     !isSelectedDay(day) &&
                       isCurrentMonth(day) &&
                       !isCurrentDay(day) &&
@@ -245,9 +259,7 @@ function Calendar() {
                     className={cn(
                       isSelectedDay(day) &&
                         "flex size-6 items-center justify-center rounded-full",
-                      isSelectedDay(day) &&
-                        isCurrentDay(day) &&
-                        "bg-indigo-600",
+                      isSelectedDay(day) && isCurrentDay(day) && "bg-blue-600",
                       isSelectedDay(day) && !isCurrentDay(day) && "bg-gray-900",
                       "ml-auto"
                     )}
@@ -297,6 +309,30 @@ function Calendar() {
           </ol>
         </div>
       )}
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent className="flex flex-col">
+          <SheetHeader>
+            <SheetTitle>Dodaj trening</SheetTitle>
+          </SheetHeader>
+          <div className="px-4 pb-4 flex-1 flex flex-col">
+            <ul>
+              <li>nazwa</li>
+              <li>Data</li>
+              <li>Typ</li>
+              <li>Tempo</li>
+              <li>Dystans</li>
+              <li>Czas</li>
+            </ul>
+            <div className="flex flex-col gap-2 mt-auto">
+              <Button className="w-full">Zapisz</Button>
+              <Button variant="outline" className="w-full">
+                Anuluj
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
