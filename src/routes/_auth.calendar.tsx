@@ -271,7 +271,7 @@ function Calendar() {
             <SheetTitle>Dodaj trening</SheetTitle>
           </SheetHeader>
           <div className="px-4 pb-4 flex-1 flex flex-col">
-            <CreateWorkoutForm />
+            <CreateWorkoutForm onCancel={() => setIsSheetOpen(false)} />
           </div>
         </SheetContent>
       </Sheet>
