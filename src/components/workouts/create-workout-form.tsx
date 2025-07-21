@@ -169,7 +169,7 @@ export function CreateWorkoutForm({
                 <FormItem>
                   <FormLabel>Nazwa treningu</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="np. Easy 2km" />
+                    <Input {...field} placeholder="np. Easy 8km" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
