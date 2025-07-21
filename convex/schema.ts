@@ -17,8 +17,8 @@ const schema = defineSchema({
           v.literal("time_trial")
         ),
         distance: v.number(),
-        tempo: v.number(),
-        duration: v.number(),
+        tempo: v.string(),
+        duration: v.string(),
       })
     ),
   }).index("by_user", ["userId"]),
@@ -37,8 +37,8 @@ const schema = defineSchema({
           v.literal("time_trial")
         ),
         distance: v.number(),
-        tempo: v.number(),
-        duration: v.number(),
+        tempo: v.string(),
+        duration: v.string(),
       })
     ),
   }).index("by_user_date", ["userId", "date"]),

@@ -27,8 +27,8 @@ export const createTemplate = mutation({
           v.literal("time_trial")
         ),
         distance: v.number(),
-        tempo: v.number(),
-        duration: v.number(),
+        tempo: v.string(),
+        duration: v.string(),
       })
     ),
   },

@@ -100,8 +100,8 @@ export function CreateWorkoutForm({
       segments: data.segments.map((segment) => ({
         type: segment.type,
         distance: parseFloat(segment.distance),
-        tempo: parseFloat(segment.tempo),
-        duration: parseFloat(segment.duration),
+        tempo: segment.tempo,
+        duration: segment.duration,
       })),
     };
 
@@ -169,7 +169,7 @@ export function CreateWorkoutForm({
                 <FormItem>
                   <FormLabel>Nazwa treningu</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Nazwa treningu" />
+                    <Input {...field} placeholder="np. Easy 2km" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -183,7 +183,7 @@ export function CreateWorkoutForm({
                 <FormItem>
                   <FormLabel>Opis (opcjonalny)</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Opis treningu" />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -261,6 +261,7 @@ export function CreateWorkoutForm({
                           <Input
                             {...field}
                             type="number"
+                            min="0"
                             step="0.1"
                             placeholder="np. 5.0"
                           />
@@ -277,7 +278,12 @@ export function CreateWorkoutForm({
                       <FormItem>
                         <FormLabel>Tempo (min/km)</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="np. 4.5" />
+                          <Input
+                            {...field}
+                            type="time"
+                            min="00:00"
+                            max="59:59"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -289,9 +295,15 @@ export function CreateWorkoutForm({
                     name={`segments.${index}.duration`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Czas trwania (min)</FormLabel>
+                        <FormLabel>Czas trwania</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="np. 25.0" />
+                          <Input
+                            {...field}
+                            type="time"
+                            step="1"
+                            min="00:00:00"
+                            max="23:59:59"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
