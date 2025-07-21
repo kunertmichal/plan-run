@@ -85,3 +85,72 @@ export const createScheduledWorkout = mutation({
     });
   },
 });
+
+export const updateScheduledWorkout = mutation({
+  args: {
+    id: v.id("scheduledWorkouts"),
+    date: v.string(),
+    name: v.string(),
+    description: v.optional(v.string()),
+    segments: v.array(
+      v.object({
+        type: v.union(
+          v.literal("easy"),
+          v.literal("tempo"),
+          v.literal("interval"),
+          v.literal("time_trial")
+        ),
+        distance: v.number(),
+        tempo: v.number(),
+        duration: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    // Verify the workout belongs to the user
+    const existingWorkout = await ctx.db
+      .query("scheduledWorkouts")
+      .filter((q) => q.eq(q.field("_id"), args.id))
+      .first();
+
+    if (!existingWorkout || existingWorkout.userId !== userId) {
+      throw new Error("Workout not found or access denied");
+    }
+
+    return ctx.db.patch(args.id, {
+      date: args.date,
+      name: args.name,
+      description: args.description,
+      segments: args.segments,
+    });
+  },
+});
+
+export const deleteScheduledWorkout = mutation({
+  args: {
+    id: v.id("scheduledWorkouts"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    // Verify the workout belongs to the user
+    const existingWorkout = await ctx.db
+      .query("scheduledWorkouts")
+      .filter((q) => q.eq(q.field("_id"), args.id))
+      .first();
+
+    if (!existingWorkout || existingWorkout.userId !== userId) {
+      throw new Error("Workout not found or access denied");
+    }
+
+    return ctx.db.delete(args.id);
+  },
+});

@@ -63,6 +63,12 @@ export function CreateWorkoutForm({
   const createWorkout = useMutation(
     api.scheduledWorkouts.createScheduledWorkout
   );
+  const updateWorkout = useMutation(
+    api.scheduledWorkouts.updateScheduledWorkout
+  );
+  const deleteWorkout = useMutation(
+    api.scheduledWorkouts.deleteScheduledWorkout
+  );
 
   const form = useForm<WorkoutFormData>({
     resolver: zodResolver(workoutSchema),
@@ -87,7 +93,7 @@ export function CreateWorkoutForm({
   });
 
   const onSubmit = (data: WorkoutFormData) => {
-    createWorkout({
+    const workoutData = {
       name: data.name,
       date: format(data.date, "yyyy-MM-dd"),
       description: data.description,
@@ -97,7 +103,18 @@ export function CreateWorkoutForm({
         tempo: parseFloat(segment.tempo),
         duration: parseFloat(segment.duration),
       })),
-    });
+    };
+
+    if (event) {
+      // Update existing workout
+      updateWorkout({
+        id: event._id,
+        ...workoutData,
+      });
+    } else {
+      // Create new workout
+      createWorkout(workoutData);
+    }
     onCancel();
   };
 
@@ -111,181 +128,196 @@ export function CreateWorkoutForm({
     }
   };
 
+  const handleDelete = () => {
+    if (event) {
+      deleteWorkout({ id: event._id });
+      onCancel();
+    }
+  };
+
   return (
-    <Form {...form}>
-      <form
-        id="create-workout-form"
-        className="space-y-6"
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    disabled
-                    value={format(field.value, "dd.MM.yyyy")}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <div className="flex flex-col h-full">
+      <Form {...form}>
+        <form
+          id="create-workout-form"
+          className="flex-1 overflow-y-auto space-y-6 px-4 pb-4"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      disabled
+                      value={format(field.value, "dd.MM.yyyy")}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nazwa treningu</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Nazwa treningu" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nazwa treningu</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Nazwa treningu" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Opis (opcjonalny)</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Opis treningu" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Segmenty</h3>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addSegment}
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Dodaj segment
-            </Button>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Opis (opcjonalny)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Opis treningu" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
-          {fields.map((field, index) => (
-            <div key={field.id} className="border rounded-lg p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Segment {index + 1}</h4>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeSegment(index)}
-                  disabled={fields.length === 1}
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name={`segments.${index}.type`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Typ segmentu</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Wybierz typ" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(segmentTypeLabels).map(
-                            ([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`segments.${index}.distance`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dystans (km)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          step="0.1"
-                          placeholder="np. 5.0"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`segments.${index}.tempo`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tempo (min/km)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="np. 4.5" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`segments.${index}.duration`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Czas trwania (min)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="np. 25.0" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Segmenty</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addSegment}
+              >
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Dodaj segment
+              </Button>
             </div>
-          ))}
-        </div>
-      </form>
 
-      <div className="flex flex-col gap-2 mt-6">
+            {fields.map((field, index) => (
+              <div key={field.id} className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Segment {index + 1}</h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeSegment(index)}
+                    disabled={fields.length === 1}
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`segments.${index}.type`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Typ segmentu</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Wybierz typ" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(segmentTypeLabels).map(
+                              ([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`segments.${index}.distance`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dystans (km)</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            step="0.1"
+                            placeholder="np. 5.0"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`segments.${index}.tempo`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tempo (min/km)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="np. 4.5" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`segments.${index}.duration`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Czas trwania (min)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="np. 25.0" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </form>
+      </Form>
+
+      <div className="flex flex-col gap-2 pt-4 border-t px-4 pb-4 bg-white">
         <Button className="w-full" type="submit" form="create-workout-form">
           {event ? "Zaktualizuj" : "Zapisz"}
         </Button>
-        <Button variant="outline" className="w-full" onClick={onCancel}>
-          Anuluj
-        </Button>
+        {event && (
+          <Button
+            variant="destructive"
+            className="w-full"
+            onClick={handleDelete}
+          >
+            Usuń trening
+          </Button>
+        )}
       </div>
-    </Form>
+    </div>
   );
 }
