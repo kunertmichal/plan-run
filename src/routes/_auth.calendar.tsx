@@ -281,8 +281,8 @@ function Calendar() {
                       className="mr-2 size-5 text-gray-400"
                       aria-hidden="true"
                     />
-                    {event.segments.map((segment) => (
-                      <span key={segment.type}>{segment.type}</span>
+                    {event.segments.map((segment, idx) => (
+                      <span key={`${segment.type}-${idx}`}>{segment.type}</span>
                     ))}
                   </time>
                 </div>
