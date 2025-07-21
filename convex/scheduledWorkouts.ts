@@ -34,6 +34,23 @@ export const getScheduledWorkouts = query({
   },
 });
 
+export const getScheduledWorkout = query({
+  args: {
+    id: v.id("scheduledWorkouts"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    return await ctx.db
+      .query("scheduledWorkouts")
+      .filter((q) => q.eq(q.field("_id"), args.id))
+      .first();
+  },
+});
+
 export const createScheduledWorkout = mutation({
   args: {
     date: v.string(),

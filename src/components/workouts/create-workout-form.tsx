@@ -14,9 +14,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Doc } from "../../../convex/_generated/dataModel";
 
 type CreateWorkoutFormProps = {
   date: Date;
+  event?: Doc<"scheduledWorkouts">;
   onCancel: () => void;
 };
 
@@ -30,7 +32,11 @@ const workoutSchema = z.object({
 
 type WorkoutFormData = z.infer<typeof workoutSchema>;
 
-export function CreateWorkoutForm({ date, onCancel }: CreateWorkoutFormProps) {
+export function CreateWorkoutForm({
+  date,
+  event,
+  onCancel,
+}: CreateWorkoutFormProps) {
   const createWorkout = useMutation(
     api.scheduledWorkouts.createScheduledWorkout
   );
@@ -39,6 +45,10 @@ export function CreateWorkoutForm({ date, onCancel }: CreateWorkoutFormProps) {
     resolver: zodResolver(workoutSchema),
     defaultValues: {
       date,
+      name: event?.name || "",
+      distance: event?.segments?.[0]?.distance?.toString() || "",
+      duration: event?.segments?.[0]?.duration?.toString() || "",
+      tempo: event?.segments?.[0]?.tempo?.toString() || "",
     },
   });
 

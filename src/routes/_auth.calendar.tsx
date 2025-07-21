@@ -15,6 +15,7 @@ import {
   format,
 } from "date-fns";
 import { api } from "../../convex/_generated/api";
+import type { Doc } from "../../convex/_generated/dataModel";
 import {
   Sheet,
   SheetContent,
@@ -53,6 +54,8 @@ function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] =
+    useState<Doc<"scheduledWorkouts"> | null>(null);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -64,6 +67,16 @@ function Calendar() {
 
   const handleOpenSheet = (date: Date) => {
     setSelectedDate(date);
+    setSelectedEvent(null);
+    setIsSheetOpen(true);
+  };
+
+  const handleOpenEventSheet = (
+    event: Doc<"scheduledWorkouts">,
+    date: Date
+  ) => {
+    setSelectedDate(date);
+    setSelectedEvent(event);
     setIsSheetOpen(true);
   };
 
@@ -168,7 +181,14 @@ function Calendar() {
                   {dayEvents.length > 0 && (
                     <ol className="mt-2">
                       {dayEvents.map((event) => (
-                        <li key={event._id}>
+                        <li
+                          key={event._id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEventSheet(event, day);
+                          }}
+                          className="cursor-pointer"
+                        >
                           <div className="group flex">
                             <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-orange-600">
                               {event.name}
@@ -275,12 +295,18 @@ function Calendar() {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="flex flex-col">
           <SheetHeader>
-            <SheetTitle>Dodaj trening</SheetTitle>
+            <SheetTitle>
+              {selectedEvent ? "Edytuj trening" : "Dodaj trening"}
+            </SheetTitle>
           </SheetHeader>
           <div className="px-4 pb-4 flex-1 flex flex-col">
             <CreateWorkoutForm
               date={selectedDate!}
-              onCancel={() => setIsSheetOpen(false)}
+              event={selectedEvent || undefined}
+              onCancel={() => {
+                setIsSheetOpen(false);
+                setSelectedEvent(null);
+              }}
             />
           </div>
         </SheetContent>
