@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
+import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,27 +12,42 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 type CreateWorkoutFormProps = {
+  date: Date;
   onCancel: () => void;
 };
 
 const workoutSchema = z.object({
+  date: z.date(),
   name: z.string().min(1),
-  distance: z.number().min(0),
+  distance: z.string().min(1),
   duration: z.string().min(1),
   tempo: z.string().min(1),
 });
 
 type WorkoutFormData = z.infer<typeof workoutSchema>;
 
-export function CreateWorkoutForm({ onCancel }: CreateWorkoutFormProps) {
+export function CreateWorkoutForm({ date, onCancel }: CreateWorkoutFormProps) {
+  const createWorkout = useMutation(
+    api.scheduledWorkouts.createScheduledWorkout
+  );
+
   const form = useForm<WorkoutFormData>({
     resolver: zodResolver(workoutSchema),
+    defaultValues: {
+      date,
+    },
   });
 
   const onSubmit = (data: WorkoutFormData) => {
-    console.log(data);
+    createWorkout({
+      name: data.name,
+      date: format(data.date, "yyyy-MM-dd"),
+      segments: [],
+    });
   };
 
   return (
@@ -41,6 +57,23 @@ export function CreateWorkoutForm({ onCancel }: CreateWorkoutFormProps) {
         className="space-y-4"
         onSubmit={form.handleSubmit(onSubmit)}
       >
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Data</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  disabled
+                  value={format(field.value, "dd.MM.yyyy")}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="name"
@@ -61,7 +94,7 @@ export function CreateWorkoutForm({ onCancel }: CreateWorkoutFormProps) {
             <FormItem>
               <FormLabel>Dystans</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} type="number" placeholder="km" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -74,7 +107,7 @@ export function CreateWorkoutForm({ onCancel }: CreateWorkoutFormProps) {
             <FormItem>
               <FormLabel>Czas trwania</FormLabel>
               <FormControl>
-                <Input placeholder="h:mm:ss" {...field} />
+                <Input placeholder="hh:mm:ss" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -82,7 +115,7 @@ export function CreateWorkoutForm({ onCancel }: CreateWorkoutFormProps) {
         />
         <FormField
           control={form.control}
-          name="name"
+          name="tempo"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tempo</FormLabel>

@@ -53,12 +53,17 @@ function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+
   const events = useQuery(api.scheduledWorkouts.getScheduledWorkouts, {
-    dateFrom: format(currentDate, "yyyy-MM-dd"),
-    dateTo: format(currentDate, "yyyy-MM-dd"),
+    dateFrom: format(monthStart, "yyyy-MM-dd"),
+    dateTo: format(monthEnd, "yyyy-MM-dd"),
   });
 
-  const handleOpenSheet = () => {
+  const handleOpenSheet = (date: Date) => {
+    setSelectedDate(date);
     setIsSheetOpen(true);
   };
 
@@ -75,8 +80,6 @@ function Calendar() {
     setSelectedDate(new Date());
   };
 
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
@@ -148,15 +151,15 @@ function Calendar() {
                     isCurrentMonth(day)
                       ? "bg-white"
                       : "bg-gray-50 text-gray-500",
-                    "relative px-3 py-2 min-h-24 cursor-pointer hover:bg-green-100"
+                    "relative px-3 py-2 min-h-24 cursor-pointer hover:bg-orange-100"
                   )}
-                  onClick={handleOpenSheet}
+                  onClick={() => handleOpenSheet(day)}
                 >
                   <time
                     dateTime={format(day, "yyyy-MM-dd")}
                     className={
                       isCurrentDay(day)
-                        ? "flex size-6 items-center justify-center rounded-full bg-blue-600 font-semibold text-white"
+                        ? "flex size-6 items-center justify-center rounded-full bg-orange-600 font-semibold text-white"
                         : undefined
                     }
                   >
@@ -167,7 +170,7 @@ function Calendar() {
                       {dayEvents.map((event) => (
                         <li key={event._id}>
                           <div className="group flex">
-                            <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-blue-600">
+                            <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-orange-600">
                               {event.name}
                             </p>
                           </div>
@@ -195,7 +198,9 @@ function Calendar() {
                     (isSelectedDay(day) || isCurrentDay(day)) &&
                       "font-semibold",
                     isSelectedDay(day) && "text-white",
-                    !isSelectedDay(day) && isCurrentDay(day) && "text-blue-600",
+                    !isSelectedDay(day) &&
+                      isCurrentDay(day) &&
+                      "text-orange-600",
                     !isSelectedDay(day) &&
                       isCurrentMonth(day) &&
                       !isCurrentDay(day) &&
@@ -212,7 +217,9 @@ function Calendar() {
                     className={cn(
                       isSelectedDay(day) &&
                         "flex size-6 items-center justify-center rounded-full",
-                      isSelectedDay(day) && isCurrentDay(day) && "bg-blue-600",
+                      isSelectedDay(day) &&
+                        isCurrentDay(day) &&
+                        "bg-orange-600",
                       isSelectedDay(day) && !isCurrentDay(day) && "bg-gray-900",
                       "ml-auto"
                     )}
@@ -271,7 +278,10 @@ function Calendar() {
             <SheetTitle>Dodaj trening</SheetTitle>
           </SheetHeader>
           <div className="px-4 pb-4 flex-1 flex flex-col">
-            <CreateWorkoutForm onCancel={() => setIsSheetOpen(false)} />
+            <CreateWorkoutForm
+              date={selectedDate!}
+              onCancel={() => setIsSheetOpen(false)}
+            />
           </div>
         </SheetContent>
       </Sheet>

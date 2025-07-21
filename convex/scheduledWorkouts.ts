@@ -36,7 +36,6 @@ export const getScheduledWorkouts = query({
 
 export const createScheduledWorkout = mutation({
   args: {
-    userId: v.id("users"),
     date: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
@@ -54,9 +53,14 @@ export const createScheduledWorkout = mutation({
       })
     ),
   },
-  handler(ctx, args) {
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
     return ctx.db.insert("scheduledWorkouts", {
-      userId: args.userId,
+      userId,
       date: args.date,
       name: args.name,
       description: args.description,
