@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeftIcon, ChevronRightIcon, ClockIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
 import {
   startOfMonth,
@@ -93,10 +93,28 @@ function Calendar() {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
 
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
   const events = useQuery(api.scheduledWorkouts.getScheduledWorkouts, {
-    dateFrom: format(monthStart, "yyyy-MM-dd"),
-    dateTo: format(monthEnd, "yyyy-MM-dd"),
+    dateFrom: format(calendarStart, "yyyy-MM-dd"),
+    dateTo: format(calendarEnd, "yyyy-MM-dd"),
   });
+
+  const segmentTotals = events?.reduce(
+    (acc, event) => {
+      event.segments.forEach((segment) => {
+        acc[segment.type] += segment.distance;
+      });
+      return acc;
+    },
+    {
+      easy: 0,
+      tempo: 0,
+      interval: 0,
+      time_trial: 0,
+    }
+  ) || { easy: 0, tempo: 0, interval: 0, time_trial: 0 };
 
   const handleOpenSheet = (date: Date) => {
     setSelectedDate(date);
@@ -126,9 +144,6 @@ function Calendar() {
     setSelectedDate(new Date());
   };
 
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const numberOfWeeks = Math.ceil(days.length / TOTAL_ROWS_TO_DISPLAY);
@@ -152,7 +167,7 @@ function Calendar() {
 
   return (
     <div>
-      <header className="mb-6 flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">
           <time dateTime={currentDate.toISOString().slice(0, 7)}>
             {monthNames[currentDate.getMonth()]} {format(currentDate, "yyyy")}
@@ -173,6 +188,28 @@ function Calendar() {
           </Button>
         </div>
       </header>
+
+      <div className="flex gap-1 my-4 rounded-full overflow-hidden">
+        {Object.values(segmentTotals).some((total) => total > 0) ? (
+          Object.entries(segmentTotals).map(([type, total]) => {
+            const totalAll = Object.values(segmentTotals).reduce(
+              (sum, val) => sum + val,
+              0
+            );
+            const percentage = totalAll > 0 ? (total / totalAll) * 100 : 0;
+            return total > 0 ? (
+              <div
+                key={type}
+                className={cn(getSegmentColor(type), "h-2")}
+                style={{ width: `${percentage}%` }}
+              />
+            ) : null;
+          })
+        ) : (
+          <div className="w-full h-2 bg-gray-300" />
+        )}
+      </div>
+
       <div className="shadow-sm ring-1 ring-black/5 lg:flex lg:flex-auto lg:flex-col">
         <div className="grid grid-cols-7 gap-px border-b border-gray-300 bg-gray-200 text-center text-xs/6 font-semibold text-gray-700 lg:flex-none">
           <div className="bg-white py-2">Pn</div>
@@ -298,10 +335,6 @@ function Calendar() {
         </div>
       </div>
 
-      <div>
-        <h2 className="text-base font-semibold">Podsumowanie</h2>
-      </div>
-
       {selectedDayEvents?.length > 0 && (
         <div className="py-10 lg:hidden">
           <ol className="divide-y divide-gray-100 overflow-hidden bg-white text-sm shadow-sm ring-1 ring-black/5">
@@ -313,18 +346,6 @@ function Calendar() {
                 <div className="flex-auto">
                   <SegmentDots segments={event.segments} />
                   <p className="font-semibold text-gray-900">{event.name}</p>
-                  <time
-                    dateTime={event.date}
-                    className="mt-2 flex items-center text-gray-700"
-                  >
-                    <ClockIcon
-                      className="mr-2 size-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                    {event.segments.map((segment, idx) => (
-                      <span key={`${segment.type}-${idx}`}>{segment.type}</span>
-                    ))}
-                  </time>
                 </div>
               </li>
             ))}
