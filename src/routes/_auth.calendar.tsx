@@ -202,6 +202,8 @@ function Calendar() {
                 key={type}
                 className={cn(getSegmentColor(type), "h-2")}
                 style={{ width: `${percentage}%` }}
+                data-type={type}
+                data-percentage={percentage.toFixed(0)}
               />
             ) : null;
           })
