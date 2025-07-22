@@ -46,6 +46,39 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
 import { CreateWorkoutForm } from "@/components/workouts/create-workout-form";
 
+// Segment color mapping
+const getSegmentColor = (type: string) => {
+  switch (type) {
+    case "easy":
+      return "bg-green-500";
+    case "tempo":
+      return "bg-orange-400";
+    case "interval":
+      return "bg-orange-600";
+    case "time_trial":
+      return "bg-red-500";
+    default:
+      return "bg-gray-400";
+  }
+};
+
+// Component to display segment dots
+const SegmentDots = ({ segments }: { segments: Array<{ type: string }> }) => {
+  if (!segments || segments.length === 0) return null;
+
+  return (
+    <div className="flex gap-1">
+      {segments.map((segment, index) => (
+        <div
+          key={index}
+          className={cn("w-2 h-2 rounded-full", getSegmentColor(segment.type))}
+          title={segment.type}
+        />
+      ))}
+    </div>
+  );
+};
+
 export const Route = createFileRoute("/_auth/calendar")({
   component: Calendar,
 });
@@ -120,7 +153,7 @@ function Calendar() {
   return (
     <div>
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-base font-semibold text-gray-900">
+        <h1 className="text-xl font-semibold text-gray-900">
           <time dateTime={currentDate.toISOString().slice(0, 7)}>
             {monthNames[currentDate.getMonth()]} {format(currentDate, "yyyy")}
           </time>
@@ -189,6 +222,7 @@ function Calendar() {
                           }}
                           className="cursor-pointer"
                         >
+                          <SegmentDots segments={event.segments} />
                           <div className="group flex">
                             <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-orange-600">
                               {event.name}
@@ -263,6 +297,11 @@ function Calendar() {
           </div>
         </div>
       </div>
+
+      <div>
+        <h2 className="text-base font-semibold">Podsumowanie</h2>
+      </div>
+
       {selectedDayEvents?.length > 0 && (
         <div className="py-10 lg:hidden">
           <ol className="divide-y divide-gray-100 overflow-hidden bg-white text-sm shadow-sm ring-1 ring-black/5">
@@ -272,6 +311,7 @@ function Calendar() {
                 className="group flex p-4 pr-6 focus-within:bg-gray-50 hover:bg-gray-50"
               >
                 <div className="flex-auto">
+                  <SegmentDots segments={event.segments} />
                   <p className="font-semibold text-gray-900">{event.name}</p>
                   <time
                     dateTime={event.date}
