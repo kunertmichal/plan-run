@@ -23,6 +23,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { PlusIcon, TrashIcon } from "lucide-react";
+import { Duration } from "luxon";
 
 type CreateWorkoutFormProps = {
   date: Date;
@@ -83,7 +84,14 @@ export function CreateWorkoutForm({
             tempo: segment.tempo.toString(),
             duration: segment.duration.toString(),
           }))
-        : [{ type: "easy", distance: "", tempo: "", duration: "" }],
+        : [
+            {
+              type: "easy",
+              distance: "",
+              tempo: "",
+              duration: "",
+            },
+          ],
     },
   });
 
@@ -91,6 +99,94 @@ export function CreateWorkoutForm({
     control: form.control,
     name: "segments",
   });
+
+  const handleParamEdit = (
+    segmentIndex: number,
+    param: "distance" | "tempo" | "duration"
+  ) => {
+    const distance = form.getValues(`segments.${segmentIndex}.distance`);
+    const tempo = form.getValues(`segments.${segmentIndex}.tempo`);
+    const duration = form.getValues(`segments.${segmentIndex}.duration`);
+    const params = [
+      { name: "distance", value: distance },
+      { name: "tempo", value: tempo },
+      { name: "duration", value: duration },
+    ];
+    const tempoInSeconds = calculateTimeToSeconds(tempo);
+    const durationInSeconds = calculateTimeToSeconds(duration);
+
+    const emptyParams = params.filter((param) => param.value === "");
+
+    if (emptyParams.length === 0) {
+      switch (param) {
+        case "distance": {
+          // update duration
+          const durationSeconds = tempoInSeconds * parseFloat(distance);
+          const newDuration = calculateSecondsToDuration(durationSeconds);
+          const currentDuration = form.getValues(
+            `segments.${segmentIndex}.duration`
+          );
+          if (newDuration !== currentDuration) {
+            form.setValue(`segments.${segmentIndex}.duration`, newDuration);
+          }
+          break;
+        }
+        case "tempo": {
+          // update duration
+          const durationSeconds = tempoInSeconds * parseFloat(distance);
+          const newDuration = calculateSecondsToDuration(durationSeconds);
+          const currentDuration = form.getValues(
+            `segments.${segmentIndex}.duration`
+          );
+          if (newDuration !== currentDuration) {
+            form.setValue(`segments.${segmentIndex}.duration`, newDuration);
+          }
+          break;
+        }
+        case "duration": {
+          // update tempo
+          const distanceNum = parseFloat(distance);
+          if (distanceNum > 0) {
+            const tempoSeconds = durationInSeconds / distanceNum;
+            const newTempo = calculateSecondsToTempo(tempoSeconds);
+            const currentTempo = form.getValues(
+              `segments.${segmentIndex}.tempo`
+            );
+            if (newTempo !== currentTempo) {
+              form.setValue(`segments.${segmentIndex}.tempo`, newTempo);
+            }
+          }
+          break;
+        }
+        default:
+          throw new Error("Invalid parameter");
+      }
+    } else if (emptyParams.length === 1) {
+      // TODO
+      const missingParam = params.find((param) => param.value === "")!;
+      console.log(missingParam);
+    }
+  };
+
+  const calculateTimeToSeconds = (time: string) => {
+    if (time === "") return 0;
+    const partsCount = time.split(":").length;
+    const normalizedTime = partsCount === 2 ? `00:${time}` : time;
+    const duration = Duration.fromISOTime(normalizedTime);
+    return duration.as("seconds");
+  };
+
+  const calculateSecondsToDuration = (seconds: number) => {
+    const duration = Duration.fromObject({ seconds });
+    const result = duration.toFormat("hh:mm:ss");
+    return result;
+  };
+
+  const calculateSecondsToTempo = (seconds: number) => {
+    const duration = Duration.fromObject({ seconds });
+    const result = duration.toFormat("mm:ss");
+    return result;
+  };
 
   const onSubmit = (data: WorkoutFormData) => {
     const workoutData = {
@@ -119,7 +215,12 @@ export function CreateWorkoutForm({
   };
 
   const addSegment = () => {
-    append({ type: "easy", distance: "", tempo: "", duration: "" });
+    append({
+      type: "easy",
+      distance: "",
+      tempo: "",
+      duration: "",
+    });
   };
 
   const removeSegment = (index: number) => {
@@ -264,6 +365,10 @@ export function CreateWorkoutForm({
                             min="0"
                             step="0.1"
                             placeholder="np. 5.0"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              handleParamEdit(index, "distance");
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -283,6 +388,10 @@ export function CreateWorkoutForm({
                             type="time"
                             min="00:00"
                             max="59:59"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              handleParamEdit(index, "tempo");
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -301,8 +410,13 @@ export function CreateWorkoutForm({
                             {...field}
                             type="time"
                             step="1"
+                            placeholder="00:00:00"
                             min="00:00:00"
                             max="23:59:59"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              handleParamEdit(index, "duration");
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
