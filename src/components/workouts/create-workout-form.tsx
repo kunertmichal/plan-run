@@ -162,9 +162,41 @@ export function CreateWorkoutForm({
           throw new Error("Invalid parameter");
       }
     } else if (emptyParams.length === 1) {
-      // TODO
       const missingParam = params.find((param) => param.value === "")!;
-      console.log(missingParam);
+      
+      switch (missingParam.name) {
+        case "distance": {
+          // Calculate distance from tempo and duration
+          if (tempo && duration && tempoInSeconds > 0) {
+            const distanceNum = durationInSeconds / tempoInSeconds;
+            const newDistance = distanceNum.toFixed(1);
+            form.setValue(`segments.${segmentIndex}.distance`, newDistance);
+          }
+          break;
+        }
+        case "tempo": {
+          // Calculate tempo from distance and duration
+          if (distance && duration) {
+            const distanceNum = parseFloat(distance);
+            if (distanceNum > 0) {
+              const tempoSeconds = durationInSeconds / distanceNum;
+              const newTempo = calculateSecondsToTempo(tempoSeconds);
+              form.setValue(`segments.${segmentIndex}.tempo`, newTempo);
+            }
+          }
+          break;
+        }
+        case "duration": {
+          // Calculate duration from distance and tempo
+          if (distance && tempo && tempoInSeconds > 0) {
+            const distanceNum = parseFloat(distance);
+            const durationSeconds = tempoInSeconds * distanceNum;
+            const newDuration = calculateSecondsToDuration(durationSeconds);
+            form.setValue(`segments.${segmentIndex}.duration`, newDuration);
+          }
+          break;
+        }
+      }
     }
   };
 
