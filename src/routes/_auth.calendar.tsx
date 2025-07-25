@@ -412,7 +412,7 @@ function Calendar() {
                       isCurrentMonth(day)
                         ? "bg-white"
                         : "bg-gray-50 text-gray-500",
-                      "relative px-3 py-2 min-h-24 cursor-pointer hover:bg-orange-100"
+                      "relative px-3 py-2 min-h-24 cursor-pointer hover:bg-orange-50"
                     )}
                     onClick={() => handleOpenSheet(day)}
                   >

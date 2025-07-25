@@ -130,7 +130,7 @@ function SortableSegment({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" {...attributes} {...listeners}>
-            <GripVerticalIcon className="h-4 w-4 text-gray-400" />
+            <GripVerticalIcon className="h-4 w-4" />
           </Button>
           <h4 className="font-medium">Segment {index + 1}</h4>
         </div>
@@ -142,7 +142,7 @@ function SortableSegment({
             onClick={() => addSegmentBefore(index)}
             title="Dodaj segment przed"
           >
-            <ChevronUpIcon className="h-4 w-4 text-gray-400" />
+            <ChevronUpIcon className="h-4 w-4" />
           </Button>
           <Button
             type="button"
@@ -151,7 +151,7 @@ function SortableSegment({
             onClick={() => addSegmentAfter(index)}
             title="Dodaj segment po"
           >
-            <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+            <ChevronDownIcon className="h-4 w-4" />
           </Button>
           <Button
             type="button"
