@@ -128,13 +128,7 @@ function SortableSegment({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="cursor-grab hover:bg-gray-100 px-1 rounded"
-            {...attributes}
-            {...listeners}
-          >
+          <Button variant="outline" size="icon" {...attributes} {...listeners}>
             <GripVerticalIcon className="h-4 w-4 text-gray-400" />
           </Button>
           <h4 className="font-medium">Segment {index + 1}</h4>
@@ -146,7 +140,7 @@ function SortableSegment({
           onClick={() => removeSegment(index)}
           disabled={fieldsLength === 1}
         >
-          <TrashIcon className="h-4 w-4" />
+          <TrashIcon className="h-4 w-4 text-gray-400" />
         </Button>
       </div>
 
@@ -272,15 +266,23 @@ function SortableSegment({
       </div>
 
       {(() => {
+        // Watch all relevant fields to trigger re-render when they change
+        const watchedFields = form.watch([
+          `segments.${index}.repetitions`,
+          `segments.${index}.distance`,
+          `segments.${index}.duration`,
+          `segments.${index}.tempo`,
+        ]);
+        const repetitions = watchedFields[0] || 1;
+
         const totals = calculateTotalSegmentValues(index);
-        const repetitions = form.watch(`segments.${index}.repetitions`) || 1;
 
         if (totals && repetitions > 1) {
           return (
             <div className="mt-3 p-3 bg-gray-50 rounded-md">
               <p className="text-sm text-gray-600">
-                <strong>Łącznie z powtórzeniami:</strong> {totals.totalDistance}{" "}
-                km, {totals.totalDuration}
+                <strong>Łącznie:</strong> {totals.totalDistance} km,{" "}
+                {totals.totalDuration}
               </p>
             </div>
           );
@@ -601,12 +603,7 @@ export function CreateWorkoutForm({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Segmenty</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addSegment}
-              >
+              <Button type="button" variant="outline" onClick={addSegment}>
                 <PlusIcon className="h-4 w-4 mr-2" />
                 Dodaj segment
               </Button>
