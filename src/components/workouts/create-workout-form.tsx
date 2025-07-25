@@ -22,8 +22,23 @@ import {
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Doc } from "../../../convex/_generated/dataModel";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, TrashIcon, GripVerticalIcon } from "lucide-react";
 import { Duration } from "luxon";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type CreateWorkoutFormProps = {
   date: Date;
@@ -56,6 +71,226 @@ const segmentTypeLabels = {
   interval: "Interwał",
   time_trial: "Próba czasowa",
 };
+
+// SortableSegment component for drag and drop
+type SortableSegmentProps = {
+  field: {
+    id: string;
+    type: "easy" | "tempo" | "interval" | "time_trial";
+    distance: string;
+    tempo: string;
+    duration: string;
+    repetitions: number;
+  };
+  index: number;
+  form: ReturnType<typeof useForm<WorkoutFormData>>;
+  handleParamEdit: (
+    index: number,
+    param: "distance" | "tempo" | "duration"
+  ) => void;
+  calculateTotalSegmentValues: (index: number) => {
+    totalDistance: string;
+    totalDuration: string;
+  } | null;
+  removeSegment: (index: number) => void;
+  fieldsLength: number;
+};
+
+function SortableSegment({
+  field,
+  index,
+  form,
+  handleParamEdit,
+  calculateTotalSegmentValues,
+  removeSegment,
+  fieldsLength,
+}: SortableSegmentProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="border rounded-lg p-4 space-y-4 bg-white"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="cursor-grab hover:bg-gray-100 px-1 rounded"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVerticalIcon className="h-4 w-4 text-gray-400" />
+          </Button>
+          <h4 className="font-medium">Segment {index + 1}</h4>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => removeSegment(index)}
+          disabled={fieldsLength === 1}
+        >
+          <TrashIcon className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name={`segments.${index}.type`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Typ segmentu</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Wybierz typ" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.entries(segmentTypeLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name={`segments.${index}.repetitions`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Powtórzenia</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value) || 1)
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name={`segments.${index}.distance`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Dystans (km)</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="np. 5.00"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleParamEdit(index, "distance");
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name={`segments.${index}.tempo`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tempo (min/km)</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="time"
+                  min="00:00"
+                  max="59:59"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleParamEdit(index, "tempo");
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name={`segments.${index}.duration`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Czas trwania</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="time"
+                  step="1"
+                  placeholder="00:00:00"
+                  min="00:00:00"
+                  max="23:59:59"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleParamEdit(index, "duration");
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {(() => {
+        const totals = calculateTotalSegmentValues(index);
+        const repetitions = form.watch(`segments.${index}.repetitions`) || 1;
+
+        if (totals && repetitions > 1) {
+          return (
+            <div className="mt-3 p-3 bg-gray-50 rounded-md">
+              <p className="text-sm text-gray-600">
+                <strong>Łącznie z powtórzeniami:</strong> {totals.totalDistance}{" "}
+                km, {totals.totalDuration}
+              </p>
+            </div>
+          );
+        }
+
+        return null;
+      })()}
+    </div>
+  );
+}
 
 export function CreateWorkoutForm({
   date,
@@ -98,10 +333,17 @@ export function CreateWorkoutForm({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control: form.control,
     name: "segments",
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleParamEdit = (
     segmentIndex: number,
@@ -370,167 +612,41 @@ export function CreateWorkoutForm({
               </Button>
             </div>
 
-            {fields.map((field, index) => (
-              <div key={field.id} className="border rounded-lg p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Segment {index + 1}</h4>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeSegment(index)}
-                    disabled={fields.length === 1}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name={`segments.${index}.type`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Typ segmentu</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Wybierz typ" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Object.entries(segmentTypeLabels).map(
-                              ([value, label]) => (
-                                <SelectItem key={value} value={value}>
-                                  {label}
-                                </SelectItem>
-                              )
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`segments.${index}.repetitions`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Powtórzenia</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            min="1"
-                            placeholder="1"
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value) || 1)
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`segments.${index}.distance`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dystans (km)</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="np. 5.00"
-                            onChange={(e) => {
-                              field.onChange(e);
-                              handleParamEdit(index, "distance");
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`segments.${index}.tempo`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tempo (min/km)</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="time"
-                            min="00:00"
-                            max="59:59"
-                            onChange={(e) => {
-                              field.onChange(e);
-                              handleParamEdit(index, "tempo");
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`segments.${index}.duration`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Czas trwania</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="time"
-                            step="1"
-                            placeholder="00:00:00"
-                            min="00:00:00"
-                            max="23:59:59"
-                            onChange={(e) => {
-                              field.onChange(e);
-                              handleParamEdit(index, "duration");
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {(() => {
-                  const totals = calculateTotalSegmentValues(index);
-                  const repetitions =
-                    form.watch(`segments.${index}.repetitions`) || 1;
-
-                  if (totals && repetitions > 1) {
-                    return (
-                      <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                        <p className="text-sm text-gray-600">
-                          <strong>Łącznie z powtórzeniami:</strong>{" "}
-                          {totals.totalDistance} km, {totals.totalDuration}
-                        </p>
-                      </div>
-                    );
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={({ active, over }) => {
+                if (active.id !== over?.id) {
+                  const oldIndex = fields.findIndex(
+                    (field) => field.id === active.id
+                  );
+                  const newIndex = fields.findIndex(
+                    (field) => field.id === over?.id
+                  );
+                  if (oldIndex !== -1 && newIndex !== -1) {
+                    move(oldIndex, newIndex);
                   }
-
-                  return null;
-                })()}
-              </div>
-            ))}
+                }
+              }}
+            >
+              <SortableContext
+                items={fields.map((field) => field.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {fields.map((field, index) => (
+                  <SortableSegment
+                    key={field.id}
+                    field={field}
+                    index={index}
+                    form={form}
+                    handleParamEdit={handleParamEdit}
+                    calculateTotalSegmentValues={calculateTotalSegmentValues}
+                    removeSegment={removeSegment}
+                    fieldsLength={fields.length}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           </div>
         </form>
       </Form>
