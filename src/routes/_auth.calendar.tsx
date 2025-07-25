@@ -103,27 +103,33 @@ const getWeeks = (days: Date[]) => {
   return weeks;
 };
 
-
-
 // Component to display week summary
-const WeekSummary = ({ 
-  weekTotals 
-}: { 
-  weekTotals: { easy: number; tempo: number; interval: number; time_trial: number } 
+const WeekSummary = ({
+  weekTotals,
+}: {
+  weekTotals: {
+    easy: number;
+    tempo: number;
+    interval: number;
+    time_trial: number;
+  };
 }) => {
   const totalAll = Object.values(weekTotals).reduce((sum, val) => sum + val, 0);
-  
+
   // Group segments by label and sum their values
-  const groupedTotals = Object.entries(weekTotals).reduce((acc, [type, total]) => {
-    const label = getSegmentLabel(type);
-    acc[label] = (acc[label] || 0) + total;
-    return acc;
-  }, {} as Record<string, number>);
+  const groupedTotals = Object.entries(weekTotals).reduce(
+    (acc, [type, total]) => {
+      const label = getSegmentLabel(type);
+      acc[label] = (acc[label] || 0) + total;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   const allCategories = [
-    { label: 'Łatwy', color: 'bg-green-500' },
-    { label: 'Średni', color: 'bg-orange-400' },
-    { label: 'Trudny', color: 'bg-red-500' }
+    { label: "Łatwy", color: "bg-green-500" },
+    { label: "Średni", color: "bg-orange-400" },
+    { label: "Trudny", color: "bg-red-500" },
   ];
 
   return (
@@ -131,12 +137,12 @@ const WeekSummary = ({
       {allCategories.map(({ label, color }) => {
         const total = groupedTotals[label] || 0;
         const percentage = totalAll > 0 ? (total / totalAll) * 100 : 0;
-        
+
         return (
           <div key={label} className="flex items-center gap-1">
             <div className={cn("w-2 h-2 rounded-full", color)} />
             <span className="text-gray-600">
-              {totalAll > 0 && total > 0 ? `${percentage.toFixed(0)}%` : 'brak'}
+              {totalAll > 0 && total > 0 ? `${percentage.toFixed(0)}%` : "brak"}
             </span>
           </div>
         );
@@ -148,7 +154,7 @@ const WeekSummary = ({
 // Helper function to find which week a date belongs to
 const findWeekForDate = (date: Date, weeks: Date[][]): Date[] | null => {
   for (const week of weeks) {
-    if (week.some(day => isSameDay(day, date))) {
+    if (week.some((day) => isSameDay(day, date))) {
       return week;
     }
   }
@@ -180,7 +186,8 @@ function Calendar() {
   const segmentTotals = events?.reduce(
     (acc, event) => {
       event.segments.forEach((segment) => {
-        acc[segment.type] += segment.distance;
+        const repetitions = segment.repetitions || 1;
+        acc[segment.type] += segment.distance * repetitions;
       });
       return acc;
     },
@@ -223,7 +230,7 @@ function Calendar() {
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const numberOfWeeks = Math.ceil(days.length / TOTAL_ROWS_TO_DISPLAY);
-  
+
   const weeks = getWeeks(days);
 
   const getEventsForDay = (date: Date) => {
@@ -235,24 +242,24 @@ function Calendar() {
   };
 
   // Helper function to calculate segment totals for a week
-const getWeekSegmentTotals = (
-  week: Date[], 
-) => {
-  const weekTotals = { easy: 0, tempo: 0, interval: 0, time_trial: 0 };
-  
-  week.forEach(day => {
-    const dayEvents = getEventsForDay(day);
-    dayEvents.forEach(event => {
-      event.segments.forEach(segment => {
-        if (segment.type in weekTotals) {
-          weekTotals[segment.type as keyof typeof weekTotals] += segment.distance;
-        }
+  const getWeekSegmentTotals = (week: Date[]) => {
+    const weekTotals = { easy: 0, tempo: 0, interval: 0, time_trial: 0 };
+
+    week.forEach((day) => {
+      const dayEvents = getEventsForDay(day);
+      dayEvents.forEach((event) => {
+        event.segments.forEach((segment) => {
+          if (segment.type in weekTotals) {
+            const repetitions = segment.repetitions || 1;
+            weekTotals[segment.type as keyof typeof weekTotals] +=
+              segment.distance * repetitions;
+          }
+        });
       });
     });
-  });
-  
-  return weekTotals;
-};
+
+    return weekTotals;
+  };
 
   const isCurrentDay = (date: Date) => isToday(date);
 
@@ -291,17 +298,23 @@ const getWeekSegmentTotals = (
         <div className="flex gap-1 rounded-full overflow-hidden mb-2">
           {(() => {
             // Group segments by label and sum their values for the bars
-            const groupedTotals = Object.entries(segmentTotals).reduce((acc, [type, total]) => {
-              const label = getSegmentLabel(type);
-              acc[label] = (acc[label] || 0) + total;
-              return acc;
-            }, {} as Record<string, number>);
+            const groupedTotals = Object.entries(segmentTotals).reduce(
+              (acc, [type, total]) => {
+                const label = getSegmentLabel(type);
+                acc[label] = (acc[label] || 0) + total;
+                return acc;
+              },
+              {} as Record<string, number>
+            );
 
-            const totalAll = Object.values(segmentTotals).reduce((sum, val) => sum + val, 0);
+            const totalAll = Object.values(segmentTotals).reduce(
+              (sum, val) => sum + val,
+              0
+            );
             const allCategories = [
-              { label: 'Łatwy', color: 'bg-green-500' },
-              { label: 'Średni', color: 'bg-orange-400' },
-              { label: 'Trudny', color: 'bg-red-500' }
+              { label: "Łatwy", color: "bg-green-500" },
+              { label: "Średni", color: "bg-orange-400" },
+              { label: "Trudny", color: "bg-red-500" },
             ];
 
             return totalAll > 0 ? (
@@ -324,32 +337,41 @@ const getWeekSegmentTotals = (
             );
           })()}
         </div>
-        
+
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
           {(() => {
             // Group segments by label and sum their values
-            const groupedTotals = Object.entries(segmentTotals).reduce((acc, [type, total]) => {
-              const label = getSegmentLabel(type);
-              acc[label] = (acc[label] || 0) + total;
-              return acc;
-            }, {} as Record<string, number>);
+            const groupedTotals = Object.entries(segmentTotals).reduce(
+              (acc, [type, total]) => {
+                const label = getSegmentLabel(type);
+                acc[label] = (acc[label] || 0) + total;
+                return acc;
+              },
+              {} as Record<string, number>
+            );
 
-            const totalAll = Object.values(segmentTotals).reduce((sum, val) => sum + val, 0);
+            const totalAll = Object.values(segmentTotals).reduce(
+              (sum, val) => sum + val,
+              0
+            );
             const allCategories = [
-              { label: 'Łatwy', color: 'bg-green-500' },
-              { label: 'Średni', color: 'bg-orange-400' },
-              { label: 'Trudny', color: 'bg-red-500' }
+              { label: "Łatwy", color: "bg-green-500" },
+              { label: "Średni", color: "bg-orange-400" },
+              { label: "Trudny", color: "bg-red-500" },
             ];
 
             return allCategories.map(({ label, color }) => {
               const total = groupedTotals[label] || 0;
               const percentage = totalAll > 0 ? (total / totalAll) * 100 : 0;
-              
+
               return (
                 <div key={label} className="flex items-center gap-1">
                   <div className={cn("w-2 h-2 rounded-full", color)} />
                   <span className="text-gray-600">
-                    {label}: {totalAll > 0 && total > 0 ? `${percentage.toFixed(0)}%` : 'brak'}
+                    {label}:{" "}
+                    {totalAll > 0 && total > 0
+                      ? `${percentage.toFixed(0)}%`
+                      : "brak"}
                   </span>
                 </div>
               );
@@ -467,7 +489,9 @@ const getWeekSegmentTotals = (
                         isSelectedDay(day) &&
                           isCurrentDay(day) &&
                           "bg-orange-600",
-                        isSelectedDay(day) && !isCurrentDay(day) && "bg-gray-900",
+                        isSelectedDay(day) &&
+                          !isCurrentDay(day) &&
+                          "bg-gray-900",
                         "ml-auto"
                       )}
                     >
@@ -496,7 +520,7 @@ const getWeekSegmentTotals = (
                 <div
                   key={weekIndex}
                   className="bg-white px-2 py-4 min-h-24 border-l border-gray-300"
-                > 
+                >
                   <WeekSummary weekTotals={weekTotals} />
                 </div>
               );
@@ -509,8 +533,10 @@ const getWeekSegmentTotals = (
         <div className="py-10 lg:hidden">
           {(() => {
             const selectedWeek = findWeekForDate(selectedDate, weeks);
-            const weekTotals = selectedWeek ? getWeekSegmentTotals(selectedWeek) : null;
-            
+            const weekTotals = selectedWeek
+              ? getWeekSegmentTotals(selectedWeek)
+              : null;
+
             return (
               <>
                 {weekTotals && (
@@ -521,7 +547,7 @@ const getWeekSegmentTotals = (
                     <WeekSummary weekTotals={weekTotals} />
                   </div>
                 )}
-                
+
                 {selectedDayEvents?.length > 0 && (
                   <ol className="divide-y divide-gray-100 overflow-hidden bg-white text-sm shadow-sm ring-1 ring-black/5">
                     {selectedDayEvents.map((event) => (
@@ -531,7 +557,9 @@ const getWeekSegmentTotals = (
                       >
                         <div className="flex-auto">
                           <SegmentDots segments={event.segments} />
-                          <p className="font-semibold text-gray-900">{event.name}</p>
+                          <p className="font-semibold text-gray-900">
+                            {event.name}
+                          </p>
                         </div>
                       </li>
                     ))}

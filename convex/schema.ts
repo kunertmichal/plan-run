@@ -19,6 +19,7 @@ const schema = defineSchema({
         distance: v.number(),
         tempo: v.string(),
         duration: v.string(),
+        repetitions: v.optional(v.number()),
       })
     ),
   }).index("by_user", ["userId"]),
@@ -39,6 +40,7 @@ const schema = defineSchema({
         distance: v.number(),
         tempo: v.string(),
         duration: v.string(),
+        repetitions: v.optional(v.number()),
       })
     ),
   }).index("by_user_date", ["userId", "date"]),

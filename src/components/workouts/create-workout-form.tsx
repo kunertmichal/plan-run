@@ -36,6 +36,7 @@ const segmentSchema = z.object({
   distance: z.string().min(1, "Dystans jest wymagany"),
   tempo: z.string().min(1, "Tempo jest wymagane"),
   duration: z.string().min(1, "Czas trwania jest wymagany"),
+  repetitions: z.number().min(1, "Liczba powtórzeń musi być większa od 0"),
 });
 
 const workoutSchema = z.object({
@@ -83,6 +84,7 @@ export function CreateWorkoutForm({
             distance: segment.distance.toString(),
             tempo: segment.tempo.toString(),
             duration: segment.duration.toString(),
+            repetitions: segment.repetitions || 1,
           }))
         : [
             {
@@ -90,6 +92,7 @@ export function CreateWorkoutForm({
               distance: "",
               tempo: "",
               duration: "",
+              repetitions: 1,
             },
           ],
     },
@@ -163,13 +166,13 @@ export function CreateWorkoutForm({
       }
     } else if (emptyParams.length === 1) {
       const missingParam = params.find((param) => param.value === "")!;
-      
+
       switch (missingParam.name) {
         case "distance": {
           // Calculate distance from tempo and duration
           if (tempo && duration && tempoInSeconds > 0) {
             const distanceNum = durationInSeconds / tempoInSeconds;
-            const newDistance = distanceNum.toFixed(1);
+            const newDistance = distanceNum.toFixed(2);
             form.setValue(`segments.${segmentIndex}.distance`, newDistance);
           }
           break;
@@ -220,6 +223,33 @@ export function CreateWorkoutForm({
     return result;
   };
 
+  const calculateTotalSegmentValues = (segmentIndex: number) => {
+    const distance = form.getValues(`segments.${segmentIndex}.distance`);
+    const duration = form.getValues(`segments.${segmentIndex}.duration`);
+    const repetitions =
+      form.getValues(`segments.${segmentIndex}.repetitions`) || 1;
+
+    if (!distance || !duration) {
+      return null;
+    }
+
+    const distanceNum = parseFloat(distance);
+    const durationInSeconds = calculateTimeToSeconds(duration);
+
+    if (isNaN(distanceNum) || durationInSeconds === 0) {
+      return null;
+    }
+
+    const totalDistance = distanceNum * repetitions;
+    const totalDurationInSeconds = durationInSeconds * repetitions;
+    const totalDuration = calculateSecondsToDuration(totalDurationInSeconds);
+
+    return {
+      totalDistance: totalDistance.toFixed(2),
+      totalDuration: totalDuration,
+    };
+  };
+
   const onSubmit = (data: WorkoutFormData) => {
     const workoutData = {
       name: data.name,
@@ -230,6 +260,7 @@ export function CreateWorkoutForm({
         distance: parseFloat(segment.distance),
         tempo: segment.tempo,
         duration: segment.duration,
+        repetitions: segment.repetitions || 1,
       })),
     };
 
@@ -252,6 +283,7 @@ export function CreateWorkoutForm({
       distance: "",
       tempo: "",
       duration: "",
+      repetitions: 1,
     });
   };
 
@@ -386,6 +418,28 @@ export function CreateWorkoutForm({
 
                   <FormField
                     control={form.control}
+                    name={`segments.${index}.repetitions`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Powtórzenia</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min="1"
+                            placeholder="1"
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 1)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name={`segments.${index}.distance`}
                     render={({ field }) => (
                       <FormItem>
@@ -395,8 +449,8 @@ export function CreateWorkoutForm({
                             {...field}
                             type="number"
                             min="0"
-                            step="0.1"
-                            placeholder="np. 5.0"
+                            step="0.01"
+                            placeholder="np. 5.00"
                             onChange={(e) => {
                               field.onChange(e);
                               handleParamEdit(index, "distance");
@@ -456,6 +510,25 @@ export function CreateWorkoutForm({
                     )}
                   />
                 </div>
+
+                {(() => {
+                  const totals = calculateTotalSegmentValues(index);
+                  const repetitions =
+                    form.watch(`segments.${index}.repetitions`) || 1;
+
+                  if (totals && repetitions > 1) {
+                    return (
+                      <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                        <p className="text-sm text-gray-600">
+                          <strong>Łącznie z powtórzeniami:</strong>{" "}
+                          {totals.totalDistance} km, {totals.totalDuration}
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })()}
               </div>
             ))}
           </div>

@@ -67,6 +67,7 @@ export const createScheduledWorkout = mutation({
         distance: v.number(),
         tempo: v.string(),
         duration: v.string(),
+        repetitions: v.optional(v.number()),
       })
     ),
   },
@@ -103,6 +104,7 @@ export const updateScheduledWorkout = mutation({
         distance: v.number(),
         tempo: v.string(),
         duration: v.string(),
+        repetitions: v.optional(v.number()),
       })
     ),
   },
