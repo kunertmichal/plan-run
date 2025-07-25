@@ -22,7 +22,12 @@ import {
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Doc } from "../../../convex/_generated/dataModel";
-import { PlusIcon, TrashIcon, GripVerticalIcon } from "lucide-react";
+import {
+  TrashIcon,
+  GripVerticalIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+} from "lucide-react";
 import { Duration } from "luxon";
 import {
   DndContext,
@@ -92,6 +97,8 @@ type SortableSegmentProps = {
     totalDuration: string;
   } | null;
   removeSegment: (index: number) => void;
+  addSegmentBefore: (index: number) => void;
+  addSegmentAfter: (index: number) => void;
   fieldsLength: number;
 };
 
@@ -102,6 +109,8 @@ function SortableSegment({
   handleParamEdit,
   calculateTotalSegmentValues,
   removeSegment,
+  addSegmentBefore,
+  addSegmentAfter,
   fieldsLength,
 }: SortableSegmentProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -125,15 +134,36 @@ function SortableSegment({
           </Button>
           <h4 className="font-medium">Segment {index + 1}</h4>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={() => removeSegment(index)}
-          disabled={fieldsLength === 1}
-        >
-          <TrashIcon className="h-4 w-4 text-gray-400" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => addSegmentBefore(index)}
+            title="Dodaj segment przed"
+          >
+            <ChevronUpIcon className="h-4 w-4 text-gray-400" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => addSegmentAfter(index)}
+            title="Dodaj segment po"
+          >
+            <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="icon"
+            onClick={() => removeSegment(index)}
+            disabled={fieldsLength === 1}
+            title="Usuń segment"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -327,7 +357,7 @@ export function CreateWorkoutForm({
     },
   });
 
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, remove, move } = useFieldArray({
     control: form.control,
     name: "segments",
   });
@@ -513,14 +543,42 @@ export function CreateWorkoutForm({
     onCancel();
   };
 
-  const addSegment = () => {
-    append({
-      type: "easy",
+  const addSegmentBefore = (index: number) => {
+    const newSegment = {
+      type: "easy" as const,
       distance: "",
       tempo: "",
       duration: "",
       repetitions: 1,
-    });
+    };
+
+    const currentSegments = form.getValues("segments");
+    const newSegments = [
+      ...currentSegments.slice(0, index),
+      newSegment,
+      ...currentSegments.slice(index),
+    ];
+
+    form.setValue("segments", newSegments);
+  };
+
+  const addSegmentAfter = (index: number) => {
+    const newSegment = {
+      type: "easy" as const,
+      distance: "",
+      tempo: "",
+      duration: "",
+      repetitions: 1,
+    };
+
+    const currentSegments = form.getValues("segments");
+    const newSegments = [
+      ...currentSegments.slice(0, index + 1),
+      newSegment,
+      ...currentSegments.slice(index + 1),
+    ];
+
+    form.setValue("segments", newSegments);
   };
 
   const removeSegment = (index: number) => {
@@ -595,10 +653,6 @@ export function CreateWorkoutForm({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Segmenty</h3>
-              <Button type="button" variant="outline" onClick={addSegment}>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Dodaj segment
-              </Button>
             </div>
 
             <DndContext
@@ -631,6 +685,8 @@ export function CreateWorkoutForm({
                     handleParamEdit={handleParamEdit}
                     calculateTotalSegmentValues={calculateTotalSegmentValues}
                     removeSegment={removeSegment}
+                    addSegmentBefore={addSegmentBefore}
+                    addSegmentAfter={addSegmentAfter}
                     fieldsLength={fields.length}
                   />
                 ))}
