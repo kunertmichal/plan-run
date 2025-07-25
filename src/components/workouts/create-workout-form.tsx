@@ -38,7 +38,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
 type CreateWorkoutFormProps = {
   date: Date;
@@ -105,19 +104,12 @@ function SortableSegment({
   removeSegment,
   fieldsLength,
 }: SortableSegmentProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: field.id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: field.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: transform ? `translate3d(0px, ${transform.y}px, 0)` : undefined,
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
