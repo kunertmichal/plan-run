@@ -52,15 +52,15 @@ type CreateWorkoutFormProps = {
 
 const segmentSchema = z.object({
   type: z.enum(["easy", "tempo", "interval", "time_trial"]),
-  distance: z.string().min(1, "Dystans jest wymagany"),
-  tempo: z.string().min(1, "Tempo jest wymagane"),
-  duration: z.string().min(1, "Czas trwania jest wymagany"),
-  repetitions: z.number().min(1, "Liczba powtórzeń musi być większa od 0"),
+  distance: z.string().min(1, "Pole obowiązkowe"),
+  tempo: z.string().min(1, "Pole obowiązkowe"),
+  duration: z.string().min(1, "Pole obowiązkowe"),
+  repetitions: z.number().min(1, "Pole obowiązkowe"),
 });
 
 const workoutSchema = z.object({
   date: z.date(),
-  name: z.string().min(1, "Nazwa treningu jest wymagana"),
+  name: z.string().min(1, "Pole obowiązkowe"),
   description: z.string().optional(),
   segments: z
     .array(segmentSchema)
