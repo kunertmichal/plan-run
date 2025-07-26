@@ -612,8 +612,9 @@ export function CreateWorkoutForm({
                   <FormControl>
                     <Input
                       {...field}
-                      disabled
-                      value={format(field.value, "dd.MM.yyyy")}
+                      type="date"
+                      value={format(field.value, "yyyy-MM-dd")}
+                      onChange={(e) => field.onChange(new Date(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
