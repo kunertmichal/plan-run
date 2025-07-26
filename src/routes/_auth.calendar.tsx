@@ -519,7 +519,7 @@ function Calendar() {
               return (
                 <div
                   key={weekIndex}
-                  className="bg-white px-2 py-4 min-h-24 border-l border-gray-300"
+                  className="bg-white px-3 py-2 min-h-24 border-l border-gray-300"
                 >
                   <WeekSummary weekTotals={weekTotals} />
                 </div>
