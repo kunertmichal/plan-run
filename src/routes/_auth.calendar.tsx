@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
 import {
   startOfMonth,
@@ -7,9 +6,7 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
-  isSameMonth,
   isSameDay,
-  isToday,
   addMonths,
   subMonths,
   format,
@@ -22,144 +19,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-
-const MONDAY_INDEX = 1;
-const TOTAL_ROWS_TO_DISPLAY = 7;
-
-const monthNames = [
-  "Styczeń",
-  "Luty",
-  "Marzec",
-  "Kwiecień",
-  "Maj",
-  "Czerwiec",
-  "Lipiec",
-  "Sierpień",
-  "Wrzesień",
-  "Październik",
-  "Listopad",
-  "Grudzień",
-];
-
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
 import { CreateWorkoutForm } from "@/components/workouts/create-workout-form";
-
-// Segment color mapping
-const getSegmentColor = (type: string) => {
-  switch (type) {
-    case "easy":
-      return "bg-green-500";
-    case "tempo":
-      return "bg-orange-400";
-    case "interval":
-      return "bg-orange-600";
-    case "time_trial":
-      return "bg-red-500";
-    default:
-      return "bg-gray-400";
-  }
-};
-
-// Segment label mapping for main legend
-const getSegmentLabel = (type: string) => {
-  switch (type) {
-    case "easy":
-      return "Łatwy";
-    case "tempo":
-      return "Średni";
-    case "interval":
-    case "time_trial":
-      return "Trudny";
-    default:
-      return type;
-  }
-};
-
-// Component to display segment dots
-const SegmentDots = ({ segments }: { segments: Array<{ type: string }> }) => {
-  if (!segments || segments.length === 0) return null;
-
-  return (
-    <div className="flex gap-1">
-      {segments.map((segment, index) => (
-        <div
-          key={index}
-          className={cn("w-2 h-2 rounded-full", getSegmentColor(segment.type))}
-          title={segment.type}
-        />
-      ))}
-    </div>
-  );
-};
-
-// Helper function to group days into weeks
-const getWeeks = (days: Date[]) => {
-  const weeks = [];
-  for (let i = 0; i < days.length; i += 7) {
-    weeks.push(days.slice(i, i + 7));
-  }
-  return weeks;
-};
-
-// Component to display week summary
-const WeekSummary = ({
-  weekTotals,
-}: {
-  weekTotals: {
-    easy: number;
-    tempo: number;
-    interval: number;
-    time_trial: number;
-  };
-}) => {
-  const totalAll = Object.values(weekTotals).reduce((sum, val) => sum + val, 0);
-
-  // Group segments by label and sum their values
-  const groupedTotals = Object.entries(weekTotals).reduce(
-    (acc, [type, total]) => {
-      const label = getSegmentLabel(type);
-      acc[label] = (acc[label] || 0) + total;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-
-  const allCategories = [
-    { label: "Łatwy", color: "bg-green-500" },
-    { label: "Średni", color: "bg-orange-400" },
-    { label: "Trudny", color: "bg-red-500" },
-  ];
-
-  return (
-    <div className="text-xs space-y-0.5">
-      {allCategories.map(({ label, color }) => {
-        const total = groupedTotals[label] || 0;
-        const percentage = totalAll > 0 ? (total / totalAll) * 100 : 0;
-
-        return (
-          <div key={label} className="flex items-center gap-1">
-            <div className={cn("w-2 h-2 rounded-full", color)} />
-            <span className="text-gray-600">
-              {totalAll > 0 && total > 0 ? `${percentage.toFixed(0)}%` : "brak"}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-// Helper function to find which week a date belongs to
-const findWeekForDate = (date: Date, weeks: Date[][]): Date[] | null => {
-  for (const week of weeks) {
-    if (week.some((day) => isSameDay(day, date))) {
-      return week;
-    }
-  }
-  return null;
-};
+import { CalendarHeader } from "@/components/calendar/CalendarHeader";
+import { MonthlyStats } from "@/components/calendar/MonthlyStats";
+import { CalendarGrid } from "@/components/calendar/CalendarGrid";
+import { WeekSummary } from "@/components/calendar/WeekSummary";
+import { SegmentDots } from "@/components/calendar/SegmentDots";
+import { MONDAY_INDEX, findWeekForDate, getWeeks } from "@/utils/calendar";
 
 export const Route = createFileRoute("/_auth/calendar")({
   component: Calendar,
@@ -228,9 +95,6 @@ function Calendar() {
   };
 
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-
-  const numberOfWeeks = Math.ceil(days.length / TOTAL_ROWS_TO_DISPLAY);
-
   const weeks = getWeeks(days);
 
   const getEventsForDay = (date: Date) => {
@@ -261,273 +125,28 @@ function Calendar() {
     return weekTotals;
   };
 
-  const isCurrentDay = (date: Date) => isToday(date);
-
-  const isSelectedDay = (date: Date) =>
-    selectedDate && isSameDay(date, selectedDate);
-
-  const isCurrentMonth = (date: Date) => isSameMonth(date, currentDate);
-
   const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate) : [];
 
   return (
     <div>
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">
-          <time dateTime={currentDate.toISOString().slice(0, 7)}>
-            {monthNames[currentDate.getMonth()]} {format(currentDate, "yyyy")}
-          </time>
-        </h1>
-        <div className="flex items-center gap-2">
-          <Button onClick={goToPreviousMonth} size="icon">
-            <ChevronLeftIcon className="h-5 w-5" />
-          </Button>
-          <Button
-            disabled={isSameDay(currentDate, new Date())}
-            onClick={goToToday}
-          >
-            Dzisiaj
-          </Button>
-          <Button onClick={goToNextMonth} size="icon">
-            <ChevronRightIcon className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
+      <CalendarHeader
+        currentDate={currentDate}
+        onPreviousMonth={goToPreviousMonth}
+        onNextMonth={goToNextMonth}
+        onToday={goToToday}
+      />
 
-      <div className="my-4">
-        <div className="flex gap-1 rounded-full overflow-hidden mb-2">
-          {(() => {
-            // Group segments by label and sum their values for the bars
-            const groupedTotals = Object.entries(segmentTotals).reduce(
-              (acc, [type, total]) => {
-                const label = getSegmentLabel(type);
-                acc[label] = (acc[label] || 0) + total;
-                return acc;
-              },
-              {} as Record<string, number>
-            );
+      <MonthlyStats segmentTotals={segmentTotals} />
 
-            const totalAll = Object.values(segmentTotals).reduce(
-              (sum, val) => sum + val,
-              0
-            );
-            const allCategories = [
-              { label: "Łatwy", color: "bg-green-500" },
-              { label: "Średni", color: "bg-orange-400" },
-              { label: "Trudny", color: "bg-red-500" },
-            ];
-
-            return totalAll > 0 ? (
-              allCategories
-                .filter(({ label }) => groupedTotals[label] > 0)
-                .map(({ label, color }) => {
-                  const total = groupedTotals[label];
-                  const percentage = (total / totalAll) * 100;
-                  return (
-                    <div
-                      key={label}
-                      className={cn(color, "h-3 relative group")}
-                      style={{ width: `${percentage}%` }}
-                      title={`${label}: ${percentage.toFixed(0)}%`}
-                    />
-                  );
-                })
-            ) : (
-              <div className="w-full h-3 bg-gray-300" />
-            );
-          })()}
-        </div>
-
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-          {(() => {
-            // Group segments by label and sum their values
-            const groupedTotals = Object.entries(segmentTotals).reduce(
-              (acc, [type, total]) => {
-                const label = getSegmentLabel(type);
-                acc[label] = (acc[label] || 0) + total;
-                return acc;
-              },
-              {} as Record<string, number>
-            );
-
-            const totalAll = Object.values(segmentTotals).reduce(
-              (sum, val) => sum + val,
-              0
-            );
-            const allCategories = [
-              { label: "Łatwy", color: "bg-green-500" },
-              { label: "Średni", color: "bg-orange-400" },
-              { label: "Trudny", color: "bg-red-500" },
-            ];
-
-            return allCategories.map(({ label, color }) => {
-              const total = groupedTotals[label] || 0;
-              const percentage = totalAll > 0 ? (total / totalAll) * 100 : 0;
-
-              return (
-                <div key={label} className="flex items-center gap-1">
-                  <div className={cn("w-2 h-2 rounded-full", color)} />
-                  <span className="text-gray-600">
-                    {label}:{" "}
-                    {totalAll > 0 && total > 0
-                      ? `${percentage.toFixed(0)}%`
-                      : "brak"}
-                  </span>
-                </div>
-              );
-            });
-          })()}
-        </div>
-      </div>
-
-      <div className="shadow-sm ring-1 ring-black/5 lg:flex lg:flex-auto lg:flex-col">
-        <div className="flex">
-          <div className="flex-1">
-            <div className="grid grid-cols-7 gap-px border-b border-gray-300 bg-gray-200 text-center text-xs/6 font-semibold text-gray-700 lg:flex-none">
-              <div className="bg-white py-2">Pn</div>
-              <div className="bg-white py-2">Wt</div>
-              <div className="bg-white py-2">Śr</div>
-              <div className="bg-white py-2">Czw</div>
-              <div className="bg-white py-2">Pt</div>
-              <div className="bg-white py-2">Sb</div>
-              <div className="bg-white py-2">Ndz</div>
-            </div>
-          </div>
-          <div className="w-24 border-b border-gray-300 bg-gray-200 text-center text-xs/6 font-semibold text-gray-700 lg:flex-none hidden lg:block">
-            <div className="bg-white py-2 border-l border-gray-200">Suma</div>
-          </div>
-        </div>
-        <div className="flex bg-gray-200 text-xs/6 text-gray-700 lg:flex-auto">
-          <div className="flex-1">
-            <div
-              className="hidden w-full lg:grid lg:grid-cols-7 lg:gap-px"
-              style={{ gridTemplateRows: `repeat(${numberOfWeeks}, 1fr)` }}
-            >
-              {days.map((day) => {
-                const dayEvents = getEventsForDay(day);
-                return (
-                  <div
-                    key={day.toISOString()}
-                    className={cn(
-                      isCurrentMonth(day)
-                        ? "bg-white"
-                        : "bg-gray-50 text-gray-500",
-                      "relative px-3 py-2 min-h-24 cursor-pointer hover:bg-orange-50"
-                    )}
-                    onClick={() => handleOpenSheet(day)}
-                  >
-                    <time
-                      dateTime={format(day, "yyyy-MM-dd")}
-                      className={
-                        isCurrentDay(day)
-                          ? "flex size-6 items-center justify-center rounded-full bg-orange-600 font-semibold text-white"
-                          : undefined
-                      }
-                    >
-                      {format(day, "d")}
-                    </time>
-                    {dayEvents.length > 0 && (
-                      <ol className="mt-2">
-                        {dayEvents.map((event) => (
-                          <li
-                            key={event._id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenEventSheet(event, day);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <SegmentDots segments={event.segments} />
-                            <div className="group flex">
-                              <p className="flex-auto truncate font-medium text-gray-900 group-hover:text-orange-600">
-                                {event.name}
-                              </p>
-                            </div>
-                          </li>
-                        ))}
-                      </ol>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <div
-              className="isolate grid w-full grid-cols-7 gap-px lg:hidden"
-              style={{ gridTemplateRows: `repeat(${numberOfWeeks}, 1fr)` }}
-            >
-              {days.map((day) => {
-                const dayEvents = getEventsForDay(day);
-                return (
-                  <button
-                    key={day.toISOString()}
-                    type="button"
-                    onClick={() => setSelectedDate(day)}
-                    className={cn(
-                      isCurrentMonth(day) ? "bg-white" : "bg-gray-50",
-                      (isSelectedDay(day) || isCurrentDay(day)) &&
-                        "font-semibold",
-                      isSelectedDay(day) && "text-white",
-                      !isSelectedDay(day) &&
-                        isCurrentDay(day) &&
-                        "text-orange-600",
-                      !isSelectedDay(day) &&
-                        isCurrentMonth(day) &&
-                        !isCurrentDay(day) &&
-                        "text-gray-900",
-                      !isSelectedDay(day) &&
-                        !isCurrentMonth(day) &&
-                        !isCurrentDay(day) &&
-                        "text-gray-500",
-                      "flex h-14 flex-col px-3 py-2 hover:bg-gray-100 focus:z-10"
-                    )}
-                  >
-                    <time
-                      dateTime={format(day, "yyyy-MM-dd")}
-                      className={cn(
-                        isSelectedDay(day) &&
-                          "flex size-6 items-center justify-center rounded-full",
-                        isSelectedDay(day) &&
-                          isCurrentDay(day) &&
-                          "bg-orange-600",
-                        isSelectedDay(day) &&
-                          !isCurrentDay(day) &&
-                          "bg-gray-900",
-                        "ml-auto"
-                      )}
-                    >
-                      {format(day, "d")}
-                    </time>
-                    <span className="sr-only">{dayEvents.length} events</span>
-                    {dayEvents.length > 0 && (
-                      <span className="-mx-0.5 mt-auto flex flex-wrap-reverse">
-                        {dayEvents.map((event) => (
-                          <span
-                            key={event._id}
-                            className="mx-0.5 mb-1 size-1.5 rounded-full bg-gray-400"
-                          />
-                        ))}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="w-24 hidden lg:flex flex-col gap-px">
-            {weeks.map((week, weekIndex) => {
-              const weekTotals = getWeekSegmentTotals(week);
-              return (
-                <div
-                  key={weekIndex}
-                  className="bg-white px-3 py-2 min-h-24 border-l border-gray-300"
-                >
-                  <WeekSummary weekTotals={weekTotals} />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <CalendarGrid
+        days={days}
+        currentDate={currentDate}
+        selectedDate={selectedDate}
+        events={events}
+        onOpenSheet={handleOpenSheet}
+        onOpenEventSheet={handleOpenEventSheet}
+        onSelectDate={setSelectedDate}
+      />
 
       {selectedDate && (
         <div className="py-10 lg:hidden">
