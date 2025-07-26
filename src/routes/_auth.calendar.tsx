@@ -133,6 +133,8 @@ function Calendar() {
           weeks={weeks}
           events={events}
           selectedDayEvents={selectedDayEvents}
+          onOpenSheet={handleOpenSheet}
+          onOpenEventSheet={handleOpenEventSheet}
         />
       )}
 
