@@ -73,3 +73,30 @@ export const allCategories = [
   { label: "Średni", color: "bg-orange-400" },
   { label: "Trudny", color: "bg-red-500" },
 ];
+
+// Helper function to calculate segment totals for a week
+export const getWeekSegmentTotals = (
+  week: Date[],
+  getEventsForDay: (
+    date: Date
+  ) => Array<{
+    segments: Array<{ type: string; distance: number; repetitions?: number }>;
+  }>
+) => {
+  const weekTotals = { easy: 0, tempo: 0, interval: 0, time_trial: 0 };
+
+  week.forEach((day) => {
+    const dayEvents = getEventsForDay(day);
+    dayEvents.forEach((event) => {
+      event.segments.forEach((segment) => {
+        if (segment.type in weekTotals) {
+          const repetitions = segment.repetitions || 1;
+          weekTotals[segment.type as keyof typeof weekTotals] +=
+            segment.distance * repetitions;
+        }
+      });
+    });
+  });
+
+  return weekTotals;
+};

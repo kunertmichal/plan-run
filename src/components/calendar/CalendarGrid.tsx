@@ -3,7 +3,11 @@ import { cn } from "@/lib/utils";
 import { SegmentDots } from "./SegmentDots";
 import { WeekSummary } from "./WeekSummary";
 import type { Doc } from "../../../convex/_generated/dataModel";
-import { getWeeks, TOTAL_ROWS_TO_DISPLAY } from "@/utils/calendar";
+import {
+  getWeeks,
+  TOTAL_ROWS_TO_DISPLAY,
+  getWeekSegmentTotals,
+} from "@/utils/calendar";
 
 interface CalendarGridProps {
   days: Date[];
@@ -33,26 +37,6 @@ export const CalendarGrid = ({
         return isSameDay(new Date(event.date), date);
       }) ?? []
     );
-  };
-
-  // Helper function to calculate segment totals for a week
-  const getWeekSegmentTotals = (week: Date[]) => {
-    const weekTotals = { easy: 0, tempo: 0, interval: 0, time_trial: 0 };
-
-    week.forEach((day) => {
-      const dayEvents = getEventsForDay(day);
-      dayEvents.forEach((event) => {
-        event.segments.forEach((segment) => {
-          if (segment.type in weekTotals) {
-            const repetitions = segment.repetitions || 1;
-            weekTotals[segment.type as keyof typeof weekTotals] +=
-              segment.distance * repetitions;
-          }
-        });
-      });
-    });
-
-    return weekTotals;
   };
 
   const isCurrentDay = (date: Date) => isToday(date);
@@ -197,7 +181,7 @@ export const CalendarGrid = ({
         {/* Week summaries for desktop */}
         <div className="w-24 hidden lg:flex flex-col gap-px">
           {weeks.map((week, weekIndex) => {
-            const weekTotals = getWeekSegmentTotals(week);
+            const weekTotals = getWeekSegmentTotals(week, getEventsForDay);
             return (
               <div
                 key={weekIndex}
